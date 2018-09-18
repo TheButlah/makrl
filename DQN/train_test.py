@@ -6,38 +6,44 @@ import gym
 from gym.wrappers import Monitor
 
 env = gym.make('Pendulum-v0')
-env = Monitor(env, "/tmp/",video_callable=lambda x: x % 100 == 0)
+env = Monitor(env, "/tmp/",video_callable=lambda x: x % 100 == 0,force=True)
+
+print("Environment Built")
 
 MEMORY_SIZE = 3000
 ACTION_SPACE = 25
 
 sess = tf.Session()
 with tf.variable_scope('natural'):
-    natural_DQN = DuelingDQN(
+    natural_DQN = DuelingDQNPrioritizedReplay(
         n_actions=ACTION_SPACE, n_features=3, memory_size=MEMORY_SIZE,
         epsilon_increment=0.001, sess=sess, dueling=False,prioritized=False,
         output_graph=True)
+    print("Natural DQN Built")
 
 
 with tf.variable_scope('dueling'):
-    dueling_DQN = DuelingDQN(
+    dueling_DQN = DuelingDQNPrioritizedReplay(
         n_actions=ACTION_SPACE, n_features=3, memory_size=MEMORY_SIZE,
         e_greedy_increment=0.001, sess=sess, dueling=True, output_graph=True,
         prioritized=False)
+    print("Dueling DQN Built")
 
 
 with tf.variable_scope('PRmem'):
-    prmem_DQN = DuelingDQN(
+    prmem_DQN = DuelingDQNPrioritizedReplay(
         n_actions=ACTION_SPACE, n_features=3, memory_size=MEMORY_SIZE,
         e_greedy_increment=0.001, sess=sess, dueling=False, output_graph=True,
         prioritized=True)
+    print("Prioritized Replay DQN Built")
 
 
 with tf.variable_scope('duelingPRmem'):
-    duelingPR_DQN = DuelingDQN(
+    duelingPR_DQN = DuelingDQNPrioritizedReplay(
         n_actions=ACTION_SPACE, n_features=3, memory_size=MEMORY_SIZE,
         e_greedy_increment=0.001, sess=sess, dueling=True, prioritized=True,
         output_graph=True)
+    print("Dueling DQN with Prioritized Replay Built")
 
 sess.run(tf.global_variables_initializer())
 
@@ -48,6 +54,8 @@ def train(RL,directory):
     total_steps = 0
     observation = env.reset()
     while True:
+        if total_steps % 100:
+            print("total_steps = " + str(total_steps))
 
         action = RL.choose_action(observation)
 
@@ -67,6 +75,7 @@ def train(RL,directory):
 
         observation = observation_
         total_steps += 1
+    print("Training Finished")
     return RL.cost_history, acc_r
 
 env.directory= "/tmp/natural/"

@@ -226,7 +226,7 @@ class DuelingDQNPrioritizedReplay(object):
     def _build_network(self):
         """
         """
-        self.state= tf.placeholder(tf.float32, [None,self.features],name='state')
+        self.state= tf.placeholder(tf.float32, [None,self.n_features],name='state')
         self.q_target = tf.placeholder(tf.float32, [None, self.n_actions], name='Q_target')
 
         #--- Eval Net ----
