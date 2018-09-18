@@ -220,7 +220,7 @@ class DuelingDQNPrioritizedReplay(object):
                 self.b2 = tf.get_variable('b2', [1, self.n_actions], collections=col_names)
                 out = tf.matmul(self.l1, self.w2) + self.b2
 
-            return out
+        return out
 
 
     def _build_network(self):
