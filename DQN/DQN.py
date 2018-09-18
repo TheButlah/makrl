@@ -135,8 +135,43 @@ class Memory(object):
 class DuelingDQNPrioritizedReplay(object):
     """
     """
-    def __init__(self,n_actions,n_features,learning_rate=0.001,reward_decay=0.9,
-    e_greedy=0.9,replace_target_iter=500,memory_size=5000,batch_size=100,
-    e_greedy_increment=None,output_graph=False,dueling=True,sess=None):
-    """
-    """
+    def __init__(
+        self,
+        n_actions,
+        n_features,
+        learning_rate=0.001,
+        gamma=0.9,
+        epsilon=0.9,
+        replace_target_iter=500,
+        memory_size=5000,
+        batch_size=100,
+        epsilon_increment=None,
+        output_graph=False,
+        dueling=True,
+        prioritized=True,
+        sess=None,
+        image_data=False
+    ):
+        """
+        """
+        self.n_actions= n_actions
+        self.n_features= n_features
+        self.lr= learning_rate
+        self.gamma= gamma
+        self.epsilon= epsilon
+        self.replace_target_iter = replace_target_iter
+        self.memory_size = memory_size
+        self.batch_size = batch_size
+        self.epsilon_increment = epsilon_increment
+        self.epsilon = 0 if epsilon_increment is not None else self.epsilon
+
+        self.prioritized= prioritized
+        self.dueling= dueling
+
+        self.learn_step_counter = 0
+
+
+    def _build_net(self):
+        """
+        """
+        
