@@ -36,8 +36,8 @@ class PriorityTree(object):
         while tree_index != 0:
             tree_index= (tree_index - 1)//2
             self.tree[tree_index] += change
-    
-    
+
+
     def add(self, p, data):
         """
         """
@@ -133,5 +133,10 @@ class Memory(object):
 
 
 class DuelingDQNPrioritizedReplay(object):
+    """
+    """
+    def __init__(self,n_actions,n_features,learning_rate=0.001,reward_decay=0.9,
+    e_greedy=0.9,replace_target_iter=500,memory_size=5000,batch_size=100,
+    e_greedy_increment=None,output_graph=False,dueling=True,sess=None):
     """
     """
