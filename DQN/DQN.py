@@ -303,7 +303,7 @@ class DuelingDQNPrioritizedReplay(object):
             _, abs_errors, self.cost = self.sess.run([self._train_op, self.abs_errors, self.loss],
                                          feed_dict={self.state: batch_memory[:, :self.n_features],
                                                     self.q_target: q_target,
-                                                    self.ISWeights: weights})
+                                                    self.weights: weights})
             self.memory.batch_update(tree_idx, abs_errors)     # update priority
         else:
             _, self.cost = self.sess.run([self._train_op, self.loss],
