@@ -170,8 +170,28 @@ class DuelingDQNPrioritizedReplay(object):
 
         self.learn_step_counter = 0
 
+        self._build_network()
+
+        if self.prioritized:
+            self.memory = Memory(capacity=memory_size)
+        else:
+            self.memory = np.zeros((self.memory_size, n_features*2+2))
+
+        t_params= tf.get_collection('target_net_params')
+        e_params= tf.get_collection('eval_net_params')
+        self.replace_target_op= [tf.assign(t, e) for t, e in zip(t_params, e_params)]
+
+        if sess is None:
+            self.sess= tf.Session()
+            self.sess.run(tf.global_variables_initializer())
+        else:
+            self.sess= sess
+        if output_graph:
+            tf.summary.FileWriter("logs/", self.sess.graph)
+
+        self.cost_history= []
+
 
     def _build_net(self):
         """
         """
-        
