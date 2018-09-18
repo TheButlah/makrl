@@ -205,12 +205,12 @@ class DuelingDQNPrioritizedReplay(object):
             with tf.variable_scope('value'):
                 self.w2v= tf.get_variable('w2v', [n_l1, 1], collections=col_names)
                 self.b2v = tf.get_variable('b2v', [1, 1], collections=col_names)
-                self.V = tf.matmul(l1, self.w2v) + self.b2v
+                self.V = tf.matmul(self.l1, self.w2v) + self.b2v
 
             with tf.variable_scope('Advantage'):
                 self.w2a = tf.get_variable('w2a', [n_l1, self.n_actions],collections=col_names)
                 self.b2a = tf.get_variable('b2a', [1, self.n_actions], collections=col_names)
-                self.A = tf.matmul(l1, self.w2a) + self.b2a
+                self.A = tf.matmul(self.l1, self.w2a) + self.b2a
 
             with tf.variable_scope('Q'):
                 out = self.V + (self.A - tf.reduce_mean(self.A, axis=1, keep_dims=True))     # Q = V(s) + A(s,a) eq(9) from paper
@@ -218,7 +218,7 @@ class DuelingDQNPrioritizedReplay(object):
             with tf.variable_scope('Q'):
                 self.w2 = tf.get_variable('w2', [n_l1, self.n_actions], collections=col_names)
                 self.b2 = tf.get_variable('b2', [1, self.n_actions], collections=col_names)
-                out = tf.matmul(l1, self.w2) + self.b2
+                out = tf.matmul(self.l1, self.w2) + self.b2
 
             return out
 
@@ -231,9 +231,9 @@ class DuelingDQNPrioritizedReplay(object):
 
         #--- Eval Net ----
         with tf.variable_scope('eval_net'):
-            c_names, n_l1, w_init, b_init = ['eval_net_params', tf.GraphKeys.GLOBAL_VARIABLES], 20 # configuration of layers
+            col_names, n_l1 = ['eval_net_params', tf.GraphKeys.GLOBAL_VARIABLES], 20 # configuration of layers
 
-            self.q_eval= self._build_layers(state,col_names,n_l1)
+            self.q_eval= self._build_layers(self.state,col_names,n_l1)
             if self.prioritized:
                 self.weights = tf.placeholder(tf.float32, [None, 1], name='weights')
 
@@ -249,7 +249,7 @@ class DuelingDQNPrioritizedReplay(object):
         with tf.variable_scope('target_net'):
             col_names = ['target_net_params', tf.GraphKeys.GLOBAL_VARIABLES]
 
-            self.q_next = build_layers(self.state_, col_names, n_l1)
+            self.q_next = self._build_layers(self.state_, col_names, n_l1)
 
 
     def store_trans(self,state,action,reward,state_):

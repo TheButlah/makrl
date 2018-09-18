@@ -25,7 +25,7 @@ with tf.variable_scope('natural'):
 with tf.variable_scope('dueling'):
     dueling_DQN = DuelingDQNPrioritizedReplay(
         n_actions=ACTION_SPACE, n_features=3, memory_size=MEMORY_SIZE,
-        e_greedy_increment=0.001, sess=sess, dueling=True, output_graph=True,
+        epsilon_increment=0.001, sess=sess, dueling=True, output_graph=True,
         prioritized=False)
     print("Dueling DQN Built")
 
@@ -33,7 +33,7 @@ with tf.variable_scope('dueling'):
 with tf.variable_scope('PRmem'):
     prmem_DQN = DuelingDQNPrioritizedReplay(
         n_actions=ACTION_SPACE, n_features=3, memory_size=MEMORY_SIZE,
-        e_greedy_increment=0.001, sess=sess, dueling=False, output_graph=True,
+        epsilon_increment=0.001, sess=sess, dueling=False, output_graph=True,
         prioritized=True)
     print("Prioritized Replay DQN Built")
 
@@ -41,7 +41,7 @@ with tf.variable_scope('PRmem'):
 with tf.variable_scope('duelingPRmem'):
     duelingPR_DQN = DuelingDQNPrioritizedReplay(
         n_actions=ACTION_SPACE, n_features=3, memory_size=MEMORY_SIZE,
-        e_greedy_increment=0.001, sess=sess, dueling=True, prioritized=True,
+        epsilon_increment=0.001, sess=sess, dueling=True, prioritized=True,
         output_graph=True)
     print("Dueling DQN with Prioritized Replay Built")
 
