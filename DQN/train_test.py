@@ -78,14 +78,10 @@ def train(RL,directory):
     print("Training Finished")
     return RL.cost_history, acc_r
 
-env.directory= "/tmp/natural/"
-c_natural, r_natural = train(natural_DQN)
-env.directory= "/tmp/dueling/"
-c_dueling, r_dueling = train(dueling_DQN)
-env.directory= "/tmp/PRmem/"
-c_PRmem, r_PRmem = train(PRmem_DQN)
-env.directory= "/tmp/duelingPR/"
-c_duelingPR, r_duelingPR = train(duelingPR_DQN)
+c_natural, r_natural = train(natural_DQN,"/tmp/natural/")
+c_dueling, r_dueling = train(dueling_DQN,"/tmp/dueling/")
+c_PRmem, r_PRmem = train(PRmem_DQN,"/tmp/PRmem/")
+c_duelingPR, r_duelingPR = train(duelingPR_DQN,"/tmp/duelingPR/")
 
 plt.figure(1)
 plt.plot(np.array(c_natural), c='r', label='natural')
