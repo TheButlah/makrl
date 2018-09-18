@@ -168,7 +168,8 @@ class DuelingDQNPrioritizedReplay(object):
         self.prioritized= prioritized
         self.dueling= dueling
 
-        self.learn_step_counter = 0
+        self.learn_step_counter= 0
+        self.memory_counter= 0
 
         self._build_network()
 
@@ -212,7 +213,7 @@ class DuelingDQNPrioritizedReplay(object):
                 self.A = tf.matmul(l1, self.w2a) + self.b2a
 
             with tf.variable_scope('Q'):
-                out = self.V + (self.A - tf.reduce_mean(self.A, axis=1, keep_dims=True))     # Q = V(s) + A(s,a)
+                out = self.V + (self.A - tf.reduce_mean(self.A, axis=1, keep_dims=True))     # Q = V(s) + A(s,a) eq(9) from paper
         else:
             with tf.variable_scope('Q'):
                 self.w2 = tf.get_variable('w2', [n_l1, self.n_actions], collections=col_names)
@@ -233,6 +234,8 @@ class DuelingDQNPrioritizedReplay(object):
             c_names, n_l1, w_init, b_init = ['eval_net_params', tf.GraphKeys.GLOBAL_VARIABLES], 20 # configuration of layers
 
             self.q_eval= self._build_layers(state,col_names,n_l1)
+            if self.prioritized:
+                self.weights = tf.placeholder(tf.float32, [None, 1], name='weights')
 
         with tf.variable_scope('loss'):
             self.loss = tf.reduce_mean(tf.squared_difference(self.q_target, self.q_eval))
@@ -252,16 +255,61 @@ class DuelingDQNPrioritizedReplay(object):
     def store_trans(self,state,action,reward,state_):
         """
         """
-        pass
+        transition = np.hstack((s, [a, r], s_))
+        index = self.memory_counter % self.memory_size
+        self.memory[index, :] = transition
+        self.memory_counter += 1
 
 
     def pick_action(self,obs):
         """
         """
-        pass
+        obs= obs[np.newaxis, :]
+        if np.random.uniform() < self.epsilon:  # choosing action
+            actions_value = self.sess.run(self.q_eval, feed_dict={self.state: observation})
+            action = np.argmax(actions_value)
+        else:
+            action = np.random.randint(0, self.n_actions)
+        return action
+
 
 
     def learn(self):
         """
         """
-        pass
+        if self.learn_step_counter % self.replace_target_iter == 0:
+            self.sess.run(self.replace_target_op)
+            #print('\ntarget_params_replaced\n')
+
+        if self.prioritized:
+            tree_index, batch_memory, weights = self.memory.sample(self.batch_size)
+        else:
+            sample_index = np.random.choice(self.memory_size, size=self.batch_size)
+            batch_memory = self.memory[sample_index, :]
+
+
+        q_next = self.sess.run(self.q_next, feed_dict={self.s_: batch_memory[:, -self.n_features:]}) # next observation
+        q_eval = self.sess.run(self.q_eval, {self.s: batch_memory[:, :self.n_features]})
+
+        q_target = q_eval.copy()
+
+        batch_index = np.arange(self.batch_size, dtype=np.int32)
+        eval_act_index = batch_memory[:, self.n_features].astype(int)
+        reward = batch_memory[:, self.n_features + 1]
+
+        q_target[batch_index, eval_act_index] = reward + self.gamma * np.max(q_next, axis=1)
+
+        if self.prioritized:
+            _, abs_errors, self.cost = self.sess.run([self._train_op, self.abs_errors, self.loss],
+                                         feed_dict={self.state: batch_memory[:, :self.n_features],
+                                                    self.q_target: q_target,
+                                                    self.ISWeights: weights})
+            self.memory.batch_update(tree_idx, abs_errors)     # update priority
+        else:
+            _, self.cost = self.sess.run([self._train_op, self.loss],
+                                         feed_dict={self.s: batch_memory[:, :self.n_features],
+                                                    self.q_target: q_target})
+        self.cost_history.append(self.cost)
+
+        self.epsilon = self.epsilon + self.epsilon_increment if self.epsilon < self.epsilon_max else self.epsilon_max
+        self.learn_step_counter += 1
