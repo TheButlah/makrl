@@ -17,6 +17,8 @@ warnings.filterwarnings('ignore')
 MEMORY_SIZE = 5000
 ACTION_SPACE = 9
 OBSERVATION_SPACE = 128
+EPISODES = 100
+STEPS = 45000
 
 sess = tf.Session()
 with tf.variable_scope('natural'):
@@ -61,37 +63,35 @@ def train(RL,directory):
     observation = env.reset()
     episodes= 0
     visualize = False
-    while True:
+    for i in range(EPISODES):
         # if total_steps % 1000 == 0:
         #     print("total_steps = " + str(total_steps))
         if episodes % 100 == 0:
             visualize = True
 
-        action = RL.pick_action(observation)
+        for k in range(STEPS):
+            action = RL.pick_action(observation)
 
-        f_action = action#(action-(ACTION_SPACE-1)/2)/((ACTION_SPACE-1)/4)   # [-2 ~ 2] float actions
-        observation_, reward, done, info = env.step(np.array([f_action]))
-        if visualize:
-            env.render()
+            f_action = action#(action-(ACTION_SPACE-1)/2)/((ACTION_SPACE-1)/4)   # [-2 ~ 2] float actions
+            observation_, reward, done, info = env.step(np.array([f_action]))
+            if visualize:
+                env.render()
 
-        #reward /= 10      # normalize to a range of (-1, 0)
-        acc_r.append(reward + acc_r[-1])  # accumulated reward
+            #reward /= 10      # normalize to a range of (-1, 0)
+            acc_r.append(reward + acc_r[-1])  # accumulated reward
 
-        RL.store_trans(observation, action, reward, observation_)
+            RL.store_trans(observation, action, reward, observation_)
 
-        if total_steps > MEMORY_SIZE:
-            RL.learn()
+            if total_steps > MEMORY_SIZE:
+                RL.learn()
 
-        if total_steps-MEMORY_SIZE > 45000:
-            break
+            if done:
+                observation = env.reset()
+                visualize=False
+                break
 
-        if done:
-            observation_= env.reset()
-            episodes += 1
-            visualize=False
-
-        observation = observation_
-        total_steps += 1
+            observation = observation_
+            total_steps += 1
     print("Training Finished after {} episodes".format(str(episodes)))
     return RL.cost_history, acc_r
 
