@@ -41,7 +41,7 @@ class PriorityTree(object):
     def add(self, p, data):
         """
         """
-        tree_index= self.data_pointer + capacity - 1
+        tree_index= self.data_pointer + self.capacity - 1
         self.data[self.data_pointer]= data #update vector of data
         self.update(tree_index,p) #update the Priority Tree
 
@@ -99,7 +99,7 @@ class Memory(object):
         """
         max_priority= np.max(self.tree.tree)
         if max_priority == 0:
-            max_priority= abs_error_upper
+            max_priority= self.abs_error_upper
 
         self.tree.add(max_priority, transition)
 
@@ -256,10 +256,14 @@ class DuelingDQNPrioritizedReplay(object):
     def store_trans(self,state,action,reward,state_):
         """
         """
-        transition = np.hstack((state, [action, reward], state_))
-        index = self.memory_counter % self.memory_size
-        self.memory[index, :] = transition
-        self.memory_counter += 1
+        if self.prioritized:    # prioritized replay
+            transition = np.hstack((state, [action, reward], state_))
+            self.memory.store(transition)    # have high priority for newly arrived transition
+        else:       # random replay
+            transition = np.hstack((state, [action, reward], state_))
+            index = self.memory_counter % self.memory_size
+            self.memory[index, :] = transition
+            self.memory_counter += 1
 
 
     def pick_action(self,obs):
