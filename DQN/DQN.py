@@ -159,6 +159,7 @@ class DuelingDQNPrioritizedReplay(object):
         self.lr= learning_rate
         self.gamma= gamma
         self.epsilon= epsilon
+        self.epsilon_max = epsilon
         self.replace_target_iter = replace_target_iter
         self.memory_size = memory_size
         self.batch_size = batch_size
@@ -255,7 +256,7 @@ class DuelingDQNPrioritizedReplay(object):
     def store_trans(self,state,action,reward,state_):
         """
         """
-        transition = np.hstack((s, [a, r], s_))
+        transition = np.hstack((state, [action, reward], state_))
         index = self.memory_counter % self.memory_size
         self.memory[index, :] = transition
         self.memory_counter += 1
@@ -266,7 +267,7 @@ class DuelingDQNPrioritizedReplay(object):
         """
         obs= obs[np.newaxis, :]
         if np.random.uniform() < self.epsilon:  # choosing action
-            actions_value = self.sess.run(self.q_eval, feed_dict={self.state: observation})
+            actions_value = self.sess.run(self.q_eval, feed_dict={self.state: obs})
             action = np.argmax(actions_value)
         else:
             action = np.random.randint(0, self.n_actions)
@@ -288,8 +289,8 @@ class DuelingDQNPrioritizedReplay(object):
             batch_memory = self.memory[sample_index, :]
 
 
-        q_next = self.sess.run(self.q_next, feed_dict={self.s_: batch_memory[:, -self.n_features:]}) # next observation
-        q_eval = self.sess.run(self.q_eval, {self.s: batch_memory[:, :self.n_features]})
+        q_next = self.sess.run(self.q_next, feed_dict={self.state_: batch_memory[:, -self.n_features:]}) # next observation
+        q_eval = self.sess.run(self.q_eval, {self.state: batch_memory[:, :self.n_features]})
 
         q_target = q_eval.copy()
 
@@ -307,7 +308,7 @@ class DuelingDQNPrioritizedReplay(object):
             self.memory.batch_update(tree_idx, abs_errors)     # update priority
         else:
             _, self.cost = self.sess.run([self._train_op, self.loss],
-                                         feed_dict={self.s: batch_memory[:, :self.n_features],
+                                         feed_dict={self.state: batch_memory[:, :self.n_features],
                                                     self.q_target: q_target})
         self.cost_history.append(self.cost)
 
