@@ -80,7 +80,7 @@ def train(RL,directory):
 
 c_natural, r_natural = train(natural_DQN,"/tmp/natural/")
 c_dueling, r_dueling = train(dueling_DQN,"/tmp/dueling/")
-c_PRmem, r_PRmem = train(prmemDQN,"/tmp/PRmem/")
+c_PRmem, r_PRmem = train(prmem_DQN,"/tmp/PRmem/")
 c_duelingPR, r_duelingPR = train(duelingPR_DQN,"/tmp/duelingPR/")
 
 plt.figure(1)
