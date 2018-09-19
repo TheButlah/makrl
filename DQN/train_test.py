@@ -55,7 +55,7 @@ sess.run(tf.global_variables_initializer())
 
 def train(RL,directory):
     env = gym.make('MsPacman-ram-v0')
-    env = Monitor(env, directory,video_callable=lambda x: x % 1000 == 0,force=True,resume=True)
+    env = Monitor(env, directory,video_callable=lambda count: count % 100 == 0,resume=True)
     acc_r = [0]
     total_steps = 0
     observation = env.reset()
