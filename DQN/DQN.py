@@ -12,6 +12,12 @@ import itertools
 import os
 import random
 
+np.random.seed(1)
+tf.set_random_seed(1)
+
+def sigmoid(x, derivative=False):
+    return x*(1-x) if derivative else 1/(1+np.exp(-x))
+
 class PriorityTree(object):
     """
     """
@@ -21,27 +27,33 @@ class PriorityTree(object):
     def __init__(self, capacity):
         """
         """
-        self.capacity = 0
-        self.tree = np.zeros(2 * capacity - 1)
+        self.capacity = capacity
+        self.tree = np.zeros(2 * capacity - 1,dtype=np.float64)
         self.data = np.zeros(capacity,dtype=object)
 
 
     def update(self, tree_index, p):
         """
         """
+        tree_index= int(tree_index)
         change= p - self.tree[tree_index]
         self.tree[tree_index]= p
 
         # propogate change throughout
         while tree_index != 0:
             tree_index= (tree_index - 1)//2
+            #print("Tree_index" + str(tree_index))
             self.tree[tree_index] += change
+
+        self.tree = self.tree / np.max(self.tree)
+
 
 
     def add(self, p, data):
         """
         """
         tree_index= self.data_pointer + self.capacity - 1
+        #print("Add " + str(self.capacity))
         self.data[self.data_pointer]= data #update vector of data
         self.update(tree_index,p) #update the Priority Tree
 
@@ -85,7 +97,7 @@ class Memory(object):
     alpha= 0.6 # [0~1] convert importance of TD error to a priority
     beta= 0.4 # importance-sampling, increasing to 1
     beta_increment_per_sampling= 0.001
-    abs_error_upper= 1. #clipped absolute error
+    abs_error_upper= 1.0 #clipped absolute error
 
 
     def __init__(self,capacity):
@@ -101,22 +113,28 @@ class Memory(object):
         if max_priority == 0:
             max_priority= self.abs_error_upper
 
+        #print(max_priority)
+
         self.tree.add(max_priority, transition)
 
 
     def sample(self, n):
         """
         """
-        batch_index, batch_memory, weight= np.empty((n,)), np.empty((n,self.tree.data.size[0])), np.empty((n,1))
+        batch_index, batch_memory, weights= np.empty((n,)), np.empty((n,self.tree.data[0].size)), np.empty((n,1))
+        #print(self.tree.total_p,n,self.tree.total_p / n)
+        #print(self.tree.tree)
         priority_segment= self.tree.total_p / n
         self.beta= np.min([1., self.beta + self.beta_increment_per_sampling])
 
         min_prob= np.min(self.tree.tree) / self.tree.total_p
         for i in range(n):
-            a, b= priority_segment*i, priority_segment*(i+1)
+            a= priority_segment*i
+            b= priority_segment*(i+1)
             v= np.random.uniform(a,b)
-            index, p, data= self.tree.get_leaf(v)
+            index, p, data= self.tree.get_node(v)
             prob = p / self.tree.total_p
+            if min_prob ==0: min_prob= 1e-6
             weights[i,0]= np.power(prob/min_prob, -self.beta)
             batch_index[i], batch_memory[i, :]= index, data
 
@@ -125,8 +143,8 @@ class Memory(object):
 
     def batch_update(self,tree_index,abs_error):
         abs_error += self.epsilon
-        clipped_error= np.minimum(abs_error, abs_error_upper)
-        priors= np.pow(clipped_error, self.alpha)
+        clipped_error= np.minimum(abs_error, self.abs_error_upper)
+        priors= np.power(clipped_error, self.alpha)
 
         for ti, p  in zip(tree_index,priors):
             self.tree.update(ti,p)
@@ -239,7 +257,11 @@ class DuelingDQNPrioritizedReplay(object):
                 self.weights = tf.placeholder(tf.float32, [None, 1], name='weights')
 
         with tf.variable_scope('loss'):
-            self.loss = tf.reduce_mean(tf.squared_difference(self.q_target, self.q_eval))
+            if self.prioritized:
+                self.abs_errors = tf.reduce_sum(tf.abs(self.q_target - self.q_eval), axis=1)    # for updating Sumtree
+                self.loss = tf.reduce_mean(self.weights * tf.squared_difference(self.q_target, self.q_eval))
+            else:
+                self.loss = tf.reduce_mean(tf.squared_difference(self.q_target, self.q_eval))
 
         with tf.variable_scope('train'):
             self._train_op = tf.train.RMSPropOptimizer(self.lr).minimize(self.loss)
@@ -309,7 +331,7 @@ class DuelingDQNPrioritizedReplay(object):
                                          feed_dict={self.state: batch_memory[:, :self.n_features],
                                                     self.q_target: q_target,
                                                     self.weights: weights})
-            self.memory.batch_update(tree_idx, abs_errors)     # update priority
+            self.memory.batch_update(tree_index, abs_errors)     # update priority
         else:
             _, self.cost = self.sess.run([self._train_op, self.loss],
                                          feed_dict={self.state: batch_memory[:, :self.n_features],

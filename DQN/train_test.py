@@ -4,19 +4,24 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 import gym
 from gym.wrappers import Monitor
+import warnings
 
-env = gym.make('Pendulum-v0')
-env = env.unwrapped #Monitor(env, "/tmp/",video_callable=lambda x: x % 100 == 0,force=True)
+warnings.filterwarnings('ignore')
 
-print("Environment Built")
+# env = gym.make('Breakout-ram-v0')
+# env = env.unwrapped
+#env = Monitor(env, "/tmp/",video_callable=lambda x: x % 100 == 0,force=True)
 
-MEMORY_SIZE = 3000
-ACTION_SPACE = 25
+#print("Environment Built")
+
+MEMORY_SIZE = 5000
+ACTION_SPACE = 9
+OBSERVATION_SPACE = 128
 
 sess = tf.Session()
 with tf.variable_scope('natural'):
     natural_DQN = DuelingDQNPrioritizedReplay(
-        n_actions=ACTION_SPACE, n_features=3, memory_size=MEMORY_SIZE,
+        n_actions=ACTION_SPACE, n_features=OBSERVATION_SPACE, memory_size=MEMORY_SIZE,
         epsilon_increment=0.001, sess=sess, dueling=False,prioritized=False,
         output_graph=True)
     print("Natural DQN Built")
@@ -24,7 +29,7 @@ with tf.variable_scope('natural'):
 
 with tf.variable_scope('dueling'):
     dueling_DQN = DuelingDQNPrioritizedReplay(
-        n_actions=ACTION_SPACE, n_features=3, memory_size=MEMORY_SIZE,
+        n_actions=ACTION_SPACE, n_features=OBSERVATION_SPACE, memory_size=MEMORY_SIZE,
         epsilon_increment=0.001, sess=sess, dueling=True, output_graph=True,
         prioritized=False)
     print("Dueling DQN Built")
@@ -32,7 +37,7 @@ with tf.variable_scope('dueling'):
 
 with tf.variable_scope('PRmem'):
     prmem_DQN = DuelingDQNPrioritizedReplay(
-        n_actions=ACTION_SPACE, n_features=3, memory_size=MEMORY_SIZE,
+        n_actions=ACTION_SPACE, n_features=OBSERVATION_SPACE, memory_size=MEMORY_SIZE,
         epsilon_increment=0.001, sess=sess, dueling=False, output_graph=True,
         prioritized=True)
     print("Prioritized Replay DQN Built")
@@ -40,7 +45,7 @@ with tf.variable_scope('PRmem'):
 
 with tf.variable_scope('duelingPRmem'):
     duelingPR_DQN = DuelingDQNPrioritizedReplay(
-        n_actions=ACTION_SPACE, n_features=3, memory_size=MEMORY_SIZE,
+        n_actions=ACTION_SPACE, n_features=OBSERVATION_SPACE, memory_size=MEMORY_SIZE,
         epsilon_increment=0.001, sess=sess, dueling=True, prioritized=True,
         output_graph=True)
     print("Dueling DQN with Prioritized Replay Built")
@@ -49,20 +54,21 @@ sess.run(tf.global_variables_initializer())
 
 
 def train(RL,directory):
-    #env.directory= directory
+    env = gym.make('MsPacman-ram-v0')
+    env = Monitor(env, directory,video_callable=lambda x: x % 1000 == 0,force=True,resume=True)
     acc_r = [0]
     total_steps = 0
     observation = env.reset()
     while True:
-        if total_steps % 100 == 0:
-            print("total_steps = " + str(total_steps))
+        # if total_steps % 1000 == 0:
+        #     print("total_steps = " + str(total_steps))
 
         action = RL.pick_action(observation)
 
-        f_action = (action-(ACTION_SPACE-1)/2)/((ACTION_SPACE-1)/4)   # [-2 ~ 2] float actions
+        f_action = action#(action-(ACTION_SPACE-1)/2)/((ACTION_SPACE-1)/4)   # [-2 ~ 2] float actions
         observation_, reward, done, info = env.step(np.array([f_action]))
 
-        reward /= 10      # normalize to a range of (-1, 0)
+        #reward /= 10      # normalize to a range of (-1, 0)
         acc_r.append(reward + acc_r[-1])  # accumulated reward
 
         RL.store_trans(observation, action, reward, observation_)
@@ -70,8 +76,11 @@ def train(RL,directory):
         if total_steps > MEMORY_SIZE:
             RL.learn()
 
-        if total_steps-MEMORY_SIZE > 15000:
+        if total_steps-MEMORY_SIZE > 45000:
             break
+
+        if done:
+            observation_= env.reset()
 
         observation = observation_
         total_steps += 1
