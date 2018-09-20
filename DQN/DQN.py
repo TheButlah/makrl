@@ -168,7 +168,8 @@ class DuelingDQNPrioritizedReplay(object):
         dueling=True,
         prioritized=True,
         sess=None,
-        image_data=False
+        image_data=False,
+        image_shape=(0,0,0)
     ):
         """
         """
@@ -183,6 +184,8 @@ class DuelingDQNPrioritizedReplay(object):
         self.batch_size = batch_size
         self.epsilon_increment = epsilon_increment
         self.epsilon = 0 if epsilon_increment is not None else self.epsilon
+        self.image = image_data
+        self.image_shape = image_shape
 
         self.prioritized= prioritized
         self.dueling= dueling
@@ -214,6 +217,21 @@ class DuelingDQNPrioritizedReplay(object):
     def _build_layers(self,state,col_names,n_l1):
         """
         """
+        # if self.image:
+        #     self.cv1= tf.get_variable('cv1', [3,3,3,64], collections=col_names)
+        #     self.cv2= tf.get_variable('cv2', [3,3,64,128], collections=col_names)
+        #     self.cv3= tf.get_variable('cv3', [3,3,128,1], collections=col_names)
+        #     self.conv1= tf.nn.convolution(self.state,self.cv1,padding='SAME',strides=[3, 3])
+        #     self.conv2= tf.nn.convolution(self.conv1,self.cv2,padding='SAME',strides=[3,3])
+        #     self.conv3= tf.nn.convolution(self.conv2,self.cv3,padding='SAME',strides=[3,3])
+        #     self.pool1= tf.nn.pool(self.conv3,[2,2],'MAX','SAME')
+        #     #shape= tf.shape(self.pool1)
+        #
+        #     self.n_features = 48 #shape[1]*shape[2]*shape[3] # 48 in this case
+        #     input= tf.reshape(self.pool1,[None,self.n_features])
+        # else:
+        #     input = state
+
         with tf.variable_scope('l1'):
             self.w1= tf.get_variable('w1', [self.n_features, n_l1], collections=col_names)
             self.b1= tf.get_variable('b1', [1,n_l1], collections=col_names)
@@ -245,7 +263,10 @@ class DuelingDQNPrioritizedReplay(object):
     def _build_network(self):
         """
         """
-        self.state= tf.placeholder(tf.float32, [None,self.n_features],name='state')
+        if self.image:
+            self.state= tf.placeholder(tf.float32, [None,self.image_shape[0],self.image_shape[1],self.image_shape[2]],name='state')
+        else:
+            self.state= tf.placeholder(tf.float32, [None,self.n_features],name='state')
         self.q_target = tf.placeholder(tf.float32, [None, self.n_actions], name='Q_target')
 
         #--- Eval Net ----
