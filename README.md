@@ -16,3 +16,4 @@ Then, simply clone this repo and run the setup script:
  cd RL-Halite
  python setup.py install
  ```
+ If you wish to contribute to the project, we suggest running `python setup.py develop` instead, which will allow you to have any changes to source files reflected in the installation without having to reinstall.

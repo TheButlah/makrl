@@ -6,7 +6,8 @@ from __future__ import division
 
 
 class Agent(object):
-    """Represents an agent that interacts with an environment."""
+    """An Abstract class that represents an agent that interacts with an
+    environment."""
 
     def __init__(self):
         """Constructs an agent and initializes it."""
@@ -19,4 +20,4 @@ class Agent(object):
     def pick_action(self, trajectory):
         raise NotImplementedError
 
-    # TODO: finish agent api
+    # TODO: Finish agent API
