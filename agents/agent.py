@@ -14,10 +14,8 @@ class Agent(with_metaclass(ABCMeta, object)):
     environment."""
 
     @abstractmethod
-    def __init__(self,policy_fn):
+    def __init__(self):
         """Constructs an agent and initializes it."""
-        self.policy = policy_fn
-        """This contains an instance of Model (subclass) that is used for eval"""
         pass
 
     @abstractmethod
