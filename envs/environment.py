@@ -6,7 +6,8 @@ from __future__ import division
 
 
 class Environment(object):
-    """Represents the environment that the agent(s) will interact with."""
+    """An abstract class that represents the environment that agents will
+    interact with."""
 
     def __init__(self, max_trajectory_length=None):
         """Constructs an Environment object.
