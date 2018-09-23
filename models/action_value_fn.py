@@ -11,18 +11,18 @@ from six import with_metaclass
 from . import Model
 
 
-class ActionValue(with_metaclass(ABCMeta, Model)):
+class ActionValueFn(with_metaclass(ABCMeta, Model)):
     """An abstract class that represents an Action-Value model that can be used
     by an agent."""
 
     @abstractmethod
     def __init__(self, *, load_model=None):
-        super(ActionValue, self).__init__(load_model=load_model)
+        super(ActionValueFn, self).__init__(load_model=load_model)
         pass
 
     @abstractmethod
     def save(self, save_path):
-        super(ActionValue, self).save(save_path)
+        super(ActionValueFn, self).save(save_path)
         pass
 
     @abstractmethod

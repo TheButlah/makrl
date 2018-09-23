@@ -11,18 +11,18 @@ from six import with_metaclass
 from . import Model
 
 
-class StateValue(with_metaclass(ABCMeta, Model)):
+class StateValueFn(with_metaclass(ABCMeta, Model)):
     """An abstract class that represents an State-Value model that can be used
     by an agent."""
 
     @abstractmethod
     def __init__(self, *, load_model=None):
-        super(StateValue, self).__init__(load_model=load_model)
+        super(StateValueFn, self).__init__(load_model=load_model)
         pass
 
     @abstractmethod
     def save(self, save_path):
-        super(StateValue, self).save(save_path)
+        super(StateValueFn, self).save(save_path)
         pass
 
     @abstractmethod
