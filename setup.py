@@ -22,4 +22,8 @@ setuptools.setup(
         "Topic :: Scientific/Engineering :: Artificial Intelligence",
         "Development Status :: 3 - Alpha",
     ),
+    install_requires=[
+        'gym',
+        'keras',
+    ],
 )
