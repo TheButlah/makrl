@@ -23,6 +23,7 @@ setuptools.setup(
         "Development Status :: 3 - Alpha",
     ),
     install_requires=[
+        'six',
         'gym',
         'keras',
     ],

@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 from __future__ import division
+from six.moves import range, zip
 
 from . import Agent
 
@@ -10,12 +11,12 @@ from . import Agent
 class QLearning(Agent):
     def __init__(self):
         super(QLearning, self).__init__()
-        pass
+        raise NotImplementedError
 
     def train_step(self):
-        pass
+        raise NotImplementedError
 
     def pick_action(self, trajectory):
-        pass
+        raise NotImplementedError
 
     # TODO: Finish QLearning implementation
