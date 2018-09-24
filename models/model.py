@@ -16,6 +16,7 @@ class Model(with_metaclass(ABCMeta, object)):
     @abstractmethod
     def __init__(self, *, load_model=None):
         """Constructs the model and initializes it.
+
         Args:
             load_model:  A string giving a path to the model to load.
         """

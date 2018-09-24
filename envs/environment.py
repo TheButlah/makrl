@@ -46,8 +46,13 @@ class Environment(with_metaclass(ABCMeta, object)):
             action: The action to take when stepping the environment. The action
                 should be one of the values of the action dictionary.
 
-        Returns: A scalar reward.
+        Returns: A scalar reward, or None if the episode terminates.
         """
+        pass
+
+    @abstractmethod
+    def get_state(self):
+        """Gets the current state of the environment."""
         pass
 
     @abstractmethod
@@ -66,5 +71,9 @@ class Environment(with_metaclass(ABCMeta, object)):
 
     def get_trajectory(self):
         """Returns the latest trajectory of the environment, up to
-        `max_trajectory_length`."""
+        `max_trajectory_length`. The trajectory is a collection of (S,A,R)
+        tuples in a deque (queue as linked list). The last element of this deque
+        is the transition the environment experienced from the latest call to
+        `step()`. Transitions older than `max_trajectory_length` will be
+        discarded."""
         return self._trajectory

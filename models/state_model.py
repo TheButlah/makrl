@@ -41,7 +41,8 @@ class StateModel(with_metaclass(ABCMeta, Model)):
     @abstractmethod
     def update_v(self, target_return, state):
         """Informs the model of updated state-values for a given batch of
-        states.
+        states. Note that `target_return` is capable of being an
+        n-step return.
 
         Args:
             target_return:  A batch of state-values as a numpy array. These
