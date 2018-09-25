@@ -9,14 +9,14 @@ from . import Agent
 
 
 class QLearning(Agent):
-    def __init__(self):
-        super(QLearning, self).__init__()
-        raise NotImplementedError
+  def __init__(self):
+    super(QLearning, self).__init__()
+    raise NotImplementedError
 
-    def train_step(self):
-        raise NotImplementedError
+  def train_step(self):
+    raise NotImplementedError
 
-    def pick_action(self, trajectory):
-        raise NotImplementedError
+  def pick_action(self, trajectory):
+    raise NotImplementedError
 
-    # TODO: Finish QLearning implementation
+  # TODO: Finish QLearning implementation

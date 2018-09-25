@@ -12,53 +12,62 @@ from . import Model
 
 
 class ActionModel(with_metaclass(ABCMeta, Model)):
-    """An abstract class that represents an Action-Value model that can be used
-    by an agent."""
+  """An abstract class that represents an Action-Value model that can be used by
+  an agent."""
 
-    @abstractmethod
-    def __init__(self, *, load_model=None):
-        super(ActionModel, self).__init__(load_model=load_model)
-        pass
+  @abstractmethod
+  def __init__(self, state_shape, action_shape, *, load_model=None):
+    """Constructs the model and initializes it.
 
-    @abstractmethod
-    def save(self, save_path):
-        super(ActionModel, self).save(save_path)
-        pass
+    Args:
+      state_shape:  The shape tuple of a single state tensor.
+      action_shape:  The shape tuple of a single action tensor.
+      load_model:  A string giving a path to the model to load.
+    """
+    super(ActionModel, self).__init__(load_model=load_model)
+    self._s_shape = (None,) + tuple(state_shape)
+    self._a_shape = (None,) + tuple(action_shape)
+    pass
 
-    @abstractmethod
-    def predict_q(self, state, action):
-        """Predicts the action-value q for a batch of state-action pairs, or
-        greedily selects the best action for a state and then returns the value
-        of that state-action pair.
+  @abstractmethod
+  def save(self, save_path):
+    super(ActionModel, self).save(save_path)
+    pass
 
-        Args:
-            state:  A batched representation of the state of the environment as
-                a numpy array.
-            action:  A batched representation of the action to take. If `None`,
-                the action will be automatically selected greedily, such that
-                the action will give the maximum value for that state. In that
-                case, the action selected will be returned along with the value.
+  @abstractmethod
+  def predict_q(self, state, action):
+    """Predicts the action-value q for a batch of state-action pairs, or
+    greedily selects the best action for a state and then returns the value
+    of that state-action pair.
 
-        Returns:
-            A batch of action-values as a numpy array. If `action` was null,
-            the result will instead be a tuple of the action-values and the
-            selected actions.
-        """
-        pass
+    Args:
+      state:  A batched representation of the state of the environment as a
+        numpy array.
+      action:  A batched representation of the action to take. If `None`, the
+        action will be automatically selected greedily, such that the action
+        will give the maximum value for that state. In that case, the action
+        selected will be returned along with the value.
 
-    @abstractmethod
-    def update_q(self, target_return, state, action):
-        """Informs the model of updated action-values for a given batch of
-        state-action pairs. Note that `target_return` is capable of being an
-        n-step return.
+    Returns:
+      A batch of action-values as a numpy array. If `action` was null, the
+      result will instead be a tuple of the action-values and the selected
+      actions.
+    """
+    pass
 
-        Args:
-            target_return:  A batch of action-values as a numpy array. These
-                values should be a new, ideally better estimate of the return at
-                the given state-action pair. The model will use this to improve.
-            state:  A batched representation of the state of the environment for
-                which the value function will be updated, as a numpy array.
-            action:  A batched representation of the actions for which the value
-                function will be updated.
-        """
-        pass
+  @abstractmethod
+  def update_q(self, target_return, state, action):
+    """Informs the model of updated action-values for a given batch of
+    state-action pairs. Note that `target_return` is capable of being an
+    n-step return.
+
+    Args:
+      target_return:  A batch of action-values as a numpy array. These values
+        should be a new, ideally better estimate of the return at the given
+        state-action pair. The model will use this to improve.
+      state:  A batched representation of the state of the environment for which
+        the value function will be updated, as a numpy array.
+      action:  A batched representation of the actions for which the value
+        function will be updated.
+    """
+    pass

@@ -12,43 +12,49 @@ from . import Model
 
 
 class StateModel(with_metaclass(ABCMeta, Model)):
-    """An abstract class that represents an State-Value model that can be used
-    by an agent."""
+  """An abstract class that represents an State-Value model that can be used by
+  an agent."""
 
-    @abstractmethod
-    def __init__(self, *, load_model=None):
-        super(StateModel, self).__init__(load_model=load_model)
-        pass
+  @abstractmethod
+  def __init__(self, state_shape, *, load_model=None):
+    """Constructs the model and initializes it.
 
-    @abstractmethod
-    def save(self, save_path):
-        super(StateModel, self).save(save_path)
-        pass
+    Args:
+      state_shape:  The shape tuple of a single state tensor.
+      load_model:  A string giving a path to the model to load.
+    """
+    super(StateModel, self).__init__(load_model=load_model)
+    self._s_shape = (None,) + tuple(state_shape)
+    pass
 
-    @abstractmethod
-    def predict_v(self, state):
-        """Predicts the state-value v for a batch of states.
+  @abstractmethod
+  def save(self, save_path):
+    super(StateModel, self).save(save_path)
+    pass
 
-        Args:
-            state:  A batched representation of the state of the environment as
-                a numpy array.
+  @abstractmethod
+  def predict_v(self, state):
+    """Predicts the state-value v for a batch of states.
 
-        Returns:
-            A batch of state-values as a numpy array.
-        """
-        pass
+    Args:
+      state:  A batched representation of the state of the environment as a
+        numpy array.
 
-    @abstractmethod
-    def update_v(self, target_return, state):
-        """Informs the model of updated state-values for a given batch of
-        states. Note that `target_return` is capable of being an
-        n-step return.
+    Returns:
+      A batch of state-values as a numpy array.
+    """
+    pass
 
-        Args:
-            target_return:  A batch of state-values as a numpy array. These
-                values should be a new, ideally better estimate of the return at
-                the given state. The model will use this to improve.
-            state:  A batched representation of the state of the environment for
-                which the value function will be updated, as a numpy array.
-        """
-        pass
+  @abstractmethod
+  def update_v(self, target_return, state):
+    """Informs the model of updated state-values for a given batch of states.
+    Note that `target_return` is capable of being an n-step return.
+
+    Args:
+      target_return:  A batch of state-values as a numpy array. These
+        values should be a new, ideally better estimate of the return at
+        the given state. The model will use this to improve.
+      state:  A batched representation of the state of the environment for
+        which the value function will be updated, as a numpy array.
+    """
+    pass

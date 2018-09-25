@@ -10,6 +10,9 @@ pip install setuptools
 ```
 Install the latest version of [TensorFlow](https://tensorflow.org). Follow the instructions at their website. You will likely also want to use cuDNN and CUDA if you are using GPU acceleration.
 
+
+Install the [Layers](https://github.com/TheButlah/Layers) library.
+
 Then, simply clone this repo and run the setup script:
  ```
  git clone https://github.com/CornellDataScience/RL-Halite
