@@ -33,12 +33,13 @@ class StateModel(with_metaclass(ABCMeta, Model)):
     pass
 
   @abstractmethod
-  def predict_v(self, state):
+  def predict_v(self, states, *, mu=None):
     """Predicts the state-value v for a batch of states.
 
     Args:
-      state:  A batched representation of the state of the environment as a
+      states:  A batched representation of the state of the environment as a
         numpy array.
+      mu: The weighting factor of the state.
 
     Returns:
       A batch of state-values as a numpy array.
@@ -46,15 +47,16 @@ class StateModel(with_metaclass(ABCMeta, Model)):
     pass
 
   @abstractmethod
-  def update_v(self, target_return, state):
+  def update_v(self, target_returns, states, *, mu=None):
     """Informs the model of updated state-values for a given batch of states.
     Note that `target_return` is capable of being an n-step return.
 
     Args:
-      target_return:  A batch of state-values as a numpy array. These
+      target_returns:  A batch of state-values as a numpy array. These
         values should be a new, ideally better estimate of the return at
         the given state. The model will use this to improve.
-      state:  A batched representation of the state of the environment for
+      states:  A batched representation of the state of the environment for
         which the value function will be updated, as a numpy array.
+      mu:  The weighting factors of the states.
     """
     pass

@@ -34,6 +34,9 @@ class FCQNet(ActionModel):
         neurons/features in each hidden layer of the model. The length of this
         list is how many hidden layers there will be. If `None`, uses default
         number of layers/features.
+      learning_rate:  The learning rate for the model.
+      scope:  A string or scope for the model. If `None`, a default scope will
+        be used.
       load_model:  A string giving a path to the model to load.
     """
     super(FCQNet, self).__init__(
@@ -141,13 +144,81 @@ class FCQNet(ActionModel):
       # The training operation to call at each training step
       self._train_step = optimizer.apply_gradients(clipped)
 
-  def predict_q(self, state, action):
-    # TODO: Implement
-    pass
+  def predict_q(self, states, actions):
+    """Uses the model to predict the q function for the given state-action pair.
 
-  def update_q(self, target_return, state, action):
-    # TODO: Implement
-    pass
+    Args:
+      states:  A numpy ndarray that represents the states of the environment.
+        Should should have a shape of [batch_size, height, width, channels].
+      actions: A numpy ndarray indicating which actions will be taken.
+
+    Returns:
+      A numpy ndarray of the q values, shaped [batch_size].
+    """
+    assert states.ndim == 4
+    assert states.shape[0] == actions.shape[0]
+
+    with self._sess.as_default():
+
+      feed_dict = {
+        self._state: states,
+        self._action: actions,
+        self._is_training: False}
+
+      fetches = self._q_pred
+
+      return self._sess.run(fetches, feed_dict=feed_dict)
+
+  def update_q(self, target_returns, states, actions, *,
+    mu=None, num_epochs=1, learning_rate=None):
+    """Updates the model parameters using the provided target batch.
+    Args:
+      target_returns: A batch of action-values as a numpy array. These values
+        should be a new, ideally better estimate of the return at the given
+        state-action pair. The model will use this to improve.
+      states:  A batched representation of the state of the environment for
+        which the value function will be updated, as a numpy array.
+      actions:  A batched representation of the actions for which the value
+        function will be updated.
+      mu:  A numpy ndarray that contains a weighting factor in range [0,1] for
+        each state in the batch. States we care more about approximating
+        accurately should be given a higher weight. For example, mu could be
+        the fraction of time spent in a given state, which would mean that
+        states we pass through often should be more important to approximate
+        correctly.
+      num_epochs:  The number of iterations over the provided batch to perform
+        for this update step. It is suggested to keep this 1 so that the model
+        doesn't become too biased due to the small size of the batch.
+      learning_rate:  The learning rate for the model. If `None`, uses the rate
+        defined in the constructor.
+
+    Returns:
+      The loss value after the update.
+    """
+    super(FCQNet, self).update_q(target_returns, states, actions)
+    assert (num_epochs >= 1)
+    assert (states.ndim > 1)
+    assert (states.shape[0] == target_returns.shape[0])
+    assert (True if actions is None else states.shape[0] == actions.shape[0])
+
+    with self._sess.as_default():
+
+      feed_dict = {
+        self._state: states,
+        self._action: actions,
+        self._q_target: target_returns,
+        self._mu: mu,
+        self._is_training: True,
+        self._lr: learning_rate}
+
+      # Choose whether to compute the best action or use the provided ones
+      fetches = [self._train_step, self._loss]
+
+      # Training step(s)
+      for epoch in range(num_epochs):
+        result = self._sess.run(fetches, feed_dict=feed_dict)
+
+      return np.squeeze(result[1:])
 
   def save(self, save_path=None):
     """Saves the model in the specified file.
