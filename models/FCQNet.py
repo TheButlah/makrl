@@ -21,7 +21,7 @@ class FCQNet(ActionModel):
   """A class that represents an Fully Connected Q Network that can be used by an
   agent."""
 
-  def __init__(self, state_shape, action_shape, *,
+  def __init__(self, state_shape, action_shape,
                hidden_neuron_list=None, learning_rate=0.001,
                scope=None,
                load_model=None):
@@ -169,7 +169,7 @@ class FCQNet(ActionModel):
 
       return self._sess.run(fetches, feed_dict=feed_dict)
 
-  def update_q(self, target_returns, states, actions, *,
+  def update_q(self, target_returns, states, actions,
     mu=None, num_epochs=1, learning_rate=None):
     """Updates the model parameters using the provided target batch.
     Args:
@@ -185,7 +185,7 @@ class FCQNet(ActionModel):
         accurately should be given a higher weight. For example, mu could be
         the fraction of time spent in a given state, which would mean that
         states we pass through often should be more important to approximate
-        correctly.
+        correctly. If `None`, no weighting will be performed.
       num_epochs:  The number of iterations over the provided batch to perform
         for this update step. It is suggested to keep this 1 so that the model
         doesn't become too biased due to the small size of the batch.

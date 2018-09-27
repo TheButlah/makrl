@@ -16,7 +16,7 @@ class Environment(with_metaclass(ABCMeta, object)):
   with."""
 
   @abstractmethod
-  def __init__(self, *, max_trajectory_length=None, seed=None):
+  def __init__(self, max_trajectory_length=None, seed=None):
     """Constructs an Environment object.
 
     Args:
@@ -55,7 +55,7 @@ class Environment(with_metaclass(ABCMeta, object)):
     pass
 
   @abstractmethod
-  def reset(self, *, seed=None):
+  def reset(self, seed=None):
     """Resets the environment to an initial state.
 
     Args:

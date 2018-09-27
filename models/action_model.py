@@ -16,7 +16,7 @@ class ActionModel(with_metaclass(ABCMeta, Model)):
   an agent."""
 
   @abstractmethod
-  def __init__(self, state_shape, action_shape, *, load_model=None):
+  def __init__(self, state_shape, action_shape, load_model=None):
     """Constructs the model and initializes it.
 
     Args:
@@ -56,7 +56,7 @@ class ActionModel(with_metaclass(ABCMeta, Model)):
     pass
 
   @abstractmethod
-  def update_q(self, target_returns, states, actions, *, mu=None):
+  def update_q(self, target_returns, states, actions, mu=None):
     """Informs the model of updated action-values for a given batch of
     state-action pairs. Note that `target_return` is capable of being an
     n-step return.

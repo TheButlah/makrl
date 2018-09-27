@@ -16,7 +16,7 @@ class StateModel(with_metaclass(ABCMeta, Model)):
   an agent."""
 
   @abstractmethod
-  def __init__(self, state_shape, *, load_model=None):
+  def __init__(self, state_shape, load_model=None):
     """Constructs the model and initializes it.
 
     Args:
@@ -33,7 +33,7 @@ class StateModel(with_metaclass(ABCMeta, Model)):
     pass
 
   @abstractmethod
-  def predict_v(self, states, *, mu=None):
+  def predict_v(self, states, mu=None):
     """Predicts the state-value v for a batch of states.
 
     Args:
@@ -47,7 +47,7 @@ class StateModel(with_metaclass(ABCMeta, Model)):
     pass
 
   @abstractmethod
-  def update_v(self, target_returns, states, *, mu=None):
+  def update_v(self, target_returns, states, mu=None):
     """Informs the model of updated state-values for a given batch of states.
     Note that `target_return` is capable of being an n-step return.
 

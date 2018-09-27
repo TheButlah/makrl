@@ -16,7 +16,7 @@ class PolicyModel(with_metaclass(ABCMeta, Model)):
   agent."""
 
   @abstractmethod
-  def __init__(self, state_shape, action_shape, *, load_model=None, **kwargs):
+  def __init__(self, state_shape, action_shape, load_model=None):
     """Constructs the model and initializes it.
 
     Args:

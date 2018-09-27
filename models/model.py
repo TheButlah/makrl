@@ -13,7 +13,7 @@ class Model(with_metaclass(ABCMeta, object)):
   """An abstract class that represents a model that can be used by an agent."""
 
   @abstractmethod
-  def __init__(self, *, load_model=None):
+  def __init__(self, load_model=None):
     """Constructs the model and initializes it.
 
     Args:

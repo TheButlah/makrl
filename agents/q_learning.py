@@ -7,16 +7,23 @@ from six.moves import range, zip
 
 from . import Agent
 
+from collections import defaultdict
+
 
 class QLearning(Agent):
-  def __init__(self):
+
+  def __init__(self, model):
     super(QLearning, self).__init__()
+    self._model = model
+    self._state_counts = defaultdict(lambda: 0)
+
+  def train_step(self, observations):
     raise NotImplementedError
 
-  def train_step(self):
+  def pick_action(self, observations):
     raise NotImplementedError
 
-  def pick_action(self, trajectory):
-    raise NotImplementedError
+  def pick_exploratory_action(self, observations):
+    pass
 
   # TODO: Finish QLearning implementation
