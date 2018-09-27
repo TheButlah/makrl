@@ -93,8 +93,8 @@ class FCQNet(ActionModel):
         tf.float32, shape=(None,), name='QTarget')
 
       # The weighting factor of the state-action pair.
-      self._mu = tf.placeholder(
-        tf.float32, shape=(None,), name='Mu')
+      self._mu = tf.placeholder_with_default(
+        tf.ones(tf.shape(self._state)), shape=(None,), name='Mu')
 
       # Whether the model is in a training step
       self._is_training = tf.placeholder(
