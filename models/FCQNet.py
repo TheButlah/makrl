@@ -220,11 +220,10 @@ class FCQNet(ActionModel):
 
       return np.squeeze(result[1:])
 
-  def save(self, save_path=None):
+  def save(self, save_path):
     """Saves the model in the specified file.
     Args:
-      save_path:  The relative path to the file. By default, it is
-        saved/SimpleFCN-Year-Month-Date_Hour-Minute-Second.ckpt
+      save_path:  The relative path to the file.
     """
     with self._sess.as_default():
       print("Saving Model")

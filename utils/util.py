@@ -3,6 +3,9 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 from __future__ import division
+from six.moves import range, zip
+
+import os.path
 
 
 class ReadOnlyDict(dict):
@@ -19,3 +22,10 @@ class ReadOnlyDict(dict):
   update = __readonly__
   setdefault = __readonly__
   del __readonly__
+
+
+def parser_path(parser, path):
+  if not os.path.exists(path):
+    parser.error("The file %s does not exist!" % path)
+  else:
+    return
