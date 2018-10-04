@@ -24,6 +24,7 @@ setuptools.setup(
   ),
   install_requires=[
     'six',
+    'logzero',
     'gym',
     'keras',
   ],
