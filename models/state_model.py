@@ -1,0 +1,62 @@
+# Python 2-3 Compatibility
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import unicode_literals
+from __future__ import division
+from six.moves import range, zip
+
+from abc import ABCMeta, abstractmethod
+from six import with_metaclass
+
+from . import Model
+
+
+class StateModel(with_metaclass(ABCMeta, Model)):
+  """An abstract class that represents an State-Value model that can be used by
+  an agent."""
+
+  @abstractmethod
+  def __init__(self, state_shape, load_model=None):
+    """Constructs the model and initializes it.
+
+    Args:
+      state_shape:  The shape tuple of a single state tensor.
+      load_model:  A string giving a path to the model to load.
+    """
+    super(StateModel, self).__init__(load_model=load_model)
+    self._s_shape = (None,) + tuple(state_shape)
+    pass
+
+  @abstractmethod
+  def save(self, save_path):
+    super(StateModel, self).save(save_path)
+    pass
+
+  @abstractmethod
+  def predict_v(self, states, mu=None):
+    """Predicts the state-value v for a batch of states.
+
+    Args:
+      states:  A batched representation of the state of the environment as a
+        numpy array.
+      mu: The weighting factor of the state.
+
+    Returns:
+      A batch of state-values as a numpy array.
+    """
+    pass
+
+  @abstractmethod
+  def update_v(self, target_returns, states, mu=None):
+    """Informs the model of updated state-values for a given batch of states.
+    Note that `target_return` is capable of being an n-step return.
+
+    Args:
+      target_returns:  A batch of state-values as a numpy array. These
+        values should be a new, ideally better estimate of the return at
+        the given state. The model will use this to improve.
+      states:  A batched representation of the state of the environment for
+        which the value function will be updated, as a numpy array.
+      mu:  The weighting factors of the states.
+    """
+    pass

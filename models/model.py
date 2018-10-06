@@ -10,22 +10,22 @@ from six import with_metaclass
 
 
 class Model(with_metaclass(ABCMeta, object)):
-    """An abstract class that represents a model that can be used by an
-    agent."""
+  """An abstract class that represents a model that can be used by an agent."""
 
-    @abstractmethod
-    def __init__(self, *, load_model=None):
-        """Constructs the model and initializes it.
-        Args:
-            load_model:  A string giving a path to the model to load.
-        """
-        pass
+  @abstractmethod
+  def __init__(self, load_model=None):
+    """Constructs the model and initializes it.
 
-    @abstractmethod
-    def save(self, save_path):
-        """Saves the model to a given location.
+    Args:
+      load_model:  A string giving a path to the model to load.
+    """
+    pass
 
-        Args:
-            save_path:  A string giving the path to save the model to.
-        """
-        pass
+  @abstractmethod
+  def save(self, save_path):
+    """Saves the model to a given location.
+
+    Args:
+      save_path:  A string giving the path to save the model to.
+    """
+    pass
