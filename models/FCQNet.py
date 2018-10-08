@@ -202,7 +202,6 @@ class FCQNet(ActionModel):
     assert (True if actions is None else states.shape[0] == actions.shape[0])
 
     with self._sess.as_default():
-
       feed_dict = {
         self._state: states,
         self._action: actions,
