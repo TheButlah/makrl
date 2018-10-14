@@ -29,3 +29,23 @@ class Model(with_metaclass(ABCMeta, object)):
       save_path:  A string giving the path to save the model to.
     """
     pass
+
+  @property
+  @abstractmethod
+  def model_state(self):
+    """Gets the current internal state of the model. For example, in RNN based
+    models, this returns the hidden state vector of the model, but in linear
+    models will return `None`. Can be used later to reset the state of the model
+    to allow for non-sequential calls, such as when an episode terminates or for
+    multiple evaluations per timestep, such as in Expected SARSA.
+    """
+    pass
+
+  @model_state.setter
+  def model_state(self, state):
+    """Sets the current internal state of the model. Should be a valid prior
+    state of the model. If `state` is `None`, will set the internal state of the
+    model to its original default/initial state.
+    """
+    pass
+
