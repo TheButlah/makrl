@@ -16,59 +16,90 @@ class ActionModel(with_metaclass(ABCMeta, Model)):
   an agent."""
 
   @abstractmethod
-  def __init__(self, state_shape, action_shape, load_model=None):
+  def __init__(self, state_shape, action_shape, step_major=False,
+    load_model=None):
     """Constructs the model and initializes it.
 
     Args:
-      state_shape:  The shape tuple of a single state tensor.
-      action_shape:  The shape tuple of a single action tensor.
+      state_shape:  A tuple representing the shape of the environment's state
+        space.
+      action_shape:  A tuple representing the shape of the environment's action
+        space.
+      step_major:  Whether or not the first dimension of the any arguments with
+        a step dimension will be the first axis or the second. If `True`, the
+        shapes described for any such arguments should have their first two
+        dimensions transposed. There may be performance benefits to having the
+        step dimension first instead of the batch dimension, but because batched
+        computation typically has the batch dimension first, this parameter is
+        `False` by default.
       load_model:  A string giving a path to the model to load.
     """
-    super(ActionModel, self).__init__(load_model=load_model)
-    self._s_shape = (None,) + tuple(state_shape)
+    super(ActionModel, self).__init__(
+      state_shape, step_major=step_major, load_model=load_model)
     self._a_shape = (None,) + tuple(action_shape)
-    pass
 
   @abstractmethod
-  def save(self, save_path):
-    super(ActionModel, self).save(save_path)
-    pass
-
-  @abstractmethod
-  def predict_q(self, states, actions):
-    """Predicts the action-value q for a batch of state-action pairs, or
-    greedily selects the best action for a state and then returns the value
-    of that state-action pair.
+  def predict_q(self, states, actions=None):
+    """Predicts the action-value q for a batch of state-action pairs. If
+    `actions` is not provided, the optimal action for each element in the batch
+    will be selected from all possible actions and returned in addition to the
+    action-value.
 
     Args:
-      states:  A batched representation of the state of the environment as a
-        numpy array.
-      actions:  A batched representation of the action to take. If `None`, the
-        action will be automatically selected greedily, such that the action
-        will give the maximum value for that state. In that case, the action
-        selected will be returned along with the value.
+      states:  A batched representation of the states of the environments.
+        Shaped `(batch_size,) + state_shape`, where `state_shape` is a
+        tuple representing the shape of the environment's state space.
+      actions:  A batched representation of the actions to take. If `None`, the
+        action will be automatically selected greedily, such each action will
+        give the maximum value for that state. In that case, the action selected
+        will be returned along with the value. Shaped
+        `(batch_size,) + action_shape`, where `action_shape` is a tuple
+        representing the shape of the environment's action space.
 
     Returns:
-      A batch of action-values as a numpy array. If `action` was null, the
+      A batch of action-values as a numpy array. If `actions` was `None`, the
       result will instead be a tuple of the action-values and the selected
       actions.
     """
     pass
 
   @abstractmethod
-  def update_q(self, target_returns, states, actions, mu=None):
-    """Informs the model of updated action-values for a given batch of
-    state-action pairs. Note that `target_return` is capable of being an
-    n-step return.
+  def update_q(self, states, actions, rewards, mu=None, num_steps=None):
+    """Updates the model based on experience gained from a given batch of
+    observed state-action-reward transitions, each represented in separate numpy
+    arrays. This function looks at the TD error for each step in the batch of
+    observations and uses that error to update the model. The update will
+    base its estimate of the return using the last value of the sequence, which
+    will be a return value instead of a reward value. This final return will be
+    based on some value determined by the `Agent`. It will be the best estimate
+    for the return experienced at the latest action in `observations`, taking
+    into account the actual experienced reward when the latest action was taken,
+    and hence will be more accurate than the current predicted return at that
+    action. By using this return, this function can compute the TD errors and
+    update the model.
 
     Args:
-      target_returns:  A batch of action-values as a numpy array. These values
-        should be a new, ideally better estimate of the return at the given
-        state-action pair. The model will use this to improve.
-      states:  A batched representation of the state of the environment for which
-        the value function will be updated, as a numpy array.
-      actions:  A batched representation of the actions for which the value
-        function will be updated.
-      mu:  The weighting factors of the states.
+      states:  A batch of observed states from transitions of the environment.
+        Shaped `(batch_size, max_steps) + state_shape`, where `state_shape` is a
+        tuple representing the shape of the environment's state space.
+      actions:  A batch of observed states from transitions of the environment.
+        Shaped `(batch_size, max_steps) + action_shape`, where `action_shape` is
+        a tuple representing the shape of the environment's action space.
+      rewards:  A batch of observed rewards from transitions of the environment.
+        Note that the last element of this ndarray will actually be a return and
+        not a reward. Shaped `(batch_size, max_steps)`.
+      mu:  Weighting factors of the states. For example, these may be the ratios
+        computed from importance sampling, or the percentage of time spent in a
+        particular state. Shaped `(batch_size, max_steps)`.
+      num_steps:  A list of integers representing the number of steps for each
+        observation in the batch as some observations' episodes may terminate,
+        resulting in a non-uniform number of steps for each observation. No
+        element of `num_steps` may be greater than `max_steps`. If `None`, it is
+        assumed that all observations in the batch are `max_steps` long. Shaped
+        `(batch_size,)`.
+
+    Returns:
+      The net loss/TD error for all steps averaged over the batch.
     """
     pass
+
