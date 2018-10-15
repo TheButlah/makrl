@@ -69,14 +69,14 @@ class ActionModel(with_metaclass(ABCMeta, Model)):
     observed state-action-reward transitions, each represented in separate numpy
     arrays. This function looks at the TD error for each step in the batch of
     observations and uses that error to update the model. The update will
-    base its estimate of the return using the last value of the sequence, which
+    base its estimate of the return using the last value in `rewards`, which
     will be a return value instead of a reward value. This final return will be
     based on some value determined by the `Agent`. It will be the best estimate
-    for the return experienced at the latest action in `observations`, taking
-    into account the actual experienced reward when the latest action was taken,
-    and hence will be more accurate than the current predicted return at that
-    action. By using this return, this function can compute the TD errors and
-    update the model.
+    for the return experienced at the latest action, taking into account the
+    actual experienced reward at that action and possibly future actions, and
+    hence will be more accurate than the current predicted return at that action.
+    By using this return, this function can compute the TD errors and update the
+    model.
 
     Args:
       states:  A batch of observed states from transitions of the environment.
@@ -90,16 +90,25 @@ class ActionModel(with_metaclass(ABCMeta, Model)):
         not a reward. Shaped `(batch_size, max_steps)`.
       mu:  Weighting factors of the states. For example, these may be the ratios
         computed from importance sampling, or the percentage of time spent in a
-        particular state. Shaped `(batch_size, max_steps)`.
-      num_steps:  A list of integers representing the number of steps for each
-        observation in the batch as some observations' episodes may terminate,
+        particular state. Shaped `(batch_size, max_steps)`. If `None`, no
+        weighting is applied.
+      num_steps:  Either a scalar or a list of integers shaped `(batch_size,)`
+        representing the number of steps for each observation in the batch. This
+        argument is needed as some observations' episodes may terminate,
         resulting in a non-uniform number of steps for each observation. No
         element of `num_steps` may be greater than `max_steps`. If `None`, it is
-        assumed that all observations in the batch are `max_steps` long. Shaped
-        `(batch_size,)`.
+        assumed that all observations in the batch are `max_steps` long.
 
     Returns:
-      The net loss/TD error for all steps averaged over the batch.
+      (loss, returns) where `loss` is the net loss/TD error for all steps
+      averaged over the batch, and `returns` is the list of returns constructed
+      from `rewards`, so that the `Agent` need not recompute those returns.
     """
+    """Developer's note: because `returns` can be computed based entirely on
+    `rewards`, it would have been easy to have the `Agent` pass in the computed
+    `rewards` ndarray. However, the developers decided against this to allow the
+    possibility of models conditioned on past rewards. Such models would have to
+    convert back from `returns` to `rewards`, thereby wasting computation.
+    Hence, we simply delegate all responsibility for computing `returns` to the
+    `Model`, and have it return what it computed."""
     pass
-

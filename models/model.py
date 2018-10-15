@@ -29,7 +29,7 @@ class Model(with_metaclass(ABCMeta, object)):
       load_model:  A string giving a path to the model to load.
     """
     self._s_shape = (None,) + tuple(state_shape)
-    self.step_major = step_major
+    self._step_major = step_major
     pass
 
   @abstractmethod
