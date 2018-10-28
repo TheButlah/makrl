@@ -48,7 +48,10 @@ class PolicyModel(with_metaclass(ABCMeta, Model)):
   @abstractmethod
   def update_pi(self, advantages, states):
     """Informs the model of the advantage values for a given batch of states.
-    Note that `advantage` is capable of being an n-step advantage.
+    Advantages are used instead of returns/values, because as long as the
+    baseline in an advantage function is not conditioned on any particular
+    action, the policy radient is unbiased and therefore advantages are more
+    general than returns/values.
 
     Args:
       advantages:  A batch of the advantage values as a numpy array. The model
