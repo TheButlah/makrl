@@ -25,8 +25,8 @@ class ActionModel(with_metaclass(ABCMeta, Model)):
         space.
       action_shape:  A tuple representing the shape of the environment's action
         space.
-      step_major:  Whether or not the first dimension of the any arguments with
-        a step dimension will be the first axis or the second. If `True`, the
+      step_major:  Whether or not the first dimension of any arguments with a
+        step dimension will be the first axis or the second. If `True`, the
         shapes described for any such arguments should have their first two
         dimensions transposed. There may be performance benefits to having the
         step dimension first instead of the batch dimension, but because batched
@@ -47,19 +47,52 @@ class ActionModel(with_metaclass(ABCMeta, Model)):
 
     Args:
       states:  A batched representation of the states of the environments.
-        Shaped `(batch_size,) + state_shape`, where `state_shape` is a
-        tuple representing the shape of the environment's state space.
-      actions:  A batched representation of the actions to take. If `None`, the
-        action will be automatically selected greedily, such each action will
-        give the maximum value for that state. In that case, the action selected
-        will be returned along with the value. Shaped
-        `(batch_size,) + action_shape`, where `action_shape` is a tuple
-        representing the shape of the environment's action space.
+        Shaped `(batch_size,) + state_shape`, where `state_shape` is a tuple
+        representing the shape of the environment's state space.
+      actions:  Can be `None`, "argmax", a float in range (0,1) or an integer,
+        "all", or a batch of actions to evaluate the function for.
+
+        If `None` or "argmax", the actions will be selected greedily, where each
+        action will be selected so that the maximum value at that state will be
+        achieved.
+
+        If a float in range (0,1) or an integer, each state will be evaluated on
+        a random subset of all possible actions, where the size of the subset is
+        determined by the provided percentage or number. Action space is sampled
+        without replacement, and therefore the number of samples should be less
+        than the size of the action space.
+
+        If "all", all actions will be evaluated, i.e. no argmax or random subset
+        will be used.
+
+        If a ndarray, it will be treated as a particular action to take for each
+        element of the batch. Should be shaped
+        `(batch_size, len(action_shape))`, where `action_shape` is a tuple
+        representing the shape of the environment's action space. In other words
+        this will be a matrix with `batch_size` rows, where each row is a tuple
+        indexing the action in the action space.
 
     Returns:
-      A batch of action-values as a numpy array. If `actions` was `None`, the
-      result will instead be a tuple of the action-values and the selected
-      actions.
+      If `actions` was `None` or "argmax", the output will be a
+      `(values, actions)` tuple, where `values` is a ndarray shaped
+      `(batch_size,)` and `actions` is a list of the index of the selected
+      action for each state in the action space, shaped
+      `(batch_size, len(action_shape))`.
+
+      If `actions` was a float or integer, the output will be a
+      `(values, actions)` tuple, where `values` is a ndarray shaped
+      `(batch_size, num_sampled_actions)` and actions is a ndarray shaped
+      `(batch_size, num_sampled_actions, len(action_shape))`.
+      `num_sampled_actions` is a number, which is either the integer provided or
+      based on the percentage times the cardinality of the action space.
+
+      If `actions` was "all", returns a ndarray shaped
+      `(batch_size,) + action_shape` for the action-values at every possible
+      action in the action space.
+
+      If `actions` was a ndarray, returns a ndarray shaped `(batch_size,)` for
+      the action-values associated with the provided list of actions.
+
     """
     pass
 
@@ -106,9 +139,9 @@ class ActionModel(with_metaclass(ABCMeta, Model)):
     """
     """Developer's note: because `returns` can be computed based entirely on
     `rewards`, it would have been easy to have the `Agent` pass in the computed
-    `rewards` ndarray. However, the developers decided against this to allow the
+    `returns` ndarray. However, this has not been done to more easily allow the
     possibility of models conditioned on past rewards. Such models would have to
     convert back from `returns` to `rewards`, thereby wasting computation.
     Hence, we simply delegate all responsibility for computing `returns` to the
-    `Model`, and have it return what it computed."""
+    `Model`."""
     pass
