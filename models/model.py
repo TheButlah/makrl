@@ -28,7 +28,7 @@ class Model(with_metaclass(ABCMeta, object)):
         `False` by default.
       load_model:  A string giving a path to the model to load.
     """
-    self._s_shape = (None,) + tuple(state_shape)
+    self._s_shape = tuple(state_shape)
     self._step_major = step_major
     pass
 

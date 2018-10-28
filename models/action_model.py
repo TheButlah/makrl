@@ -36,14 +36,15 @@ class ActionModel(with_metaclass(ABCMeta, Model)):
     """
     super(ActionModel, self).__init__(
       state_shape, step_major=step_major, load_model=load_model)
-    self._a_shape = (None,) + tuple(action_shape)
+    self._a_shape = tuple(action_shape)
 
   @abstractmethod
   def predict_q(self, states, actions=None):
-    """Predicts the action-value q for a batch of state-action pairs. If
-    `actions` is not provided, the optimal action for each element in the batch
-    will be selected from all possible actions and returned in addition to the
-    action-value.
+    """Predicts the action-value q for a batch of state-action pairs. If actions
+    is not an ndarray, a variety of computations on the action space can be
+    performed. For example, if actions is `None` or "argmax", this predicts the
+    value of a state using a greedy policy, which is used in algorithms such as
+    Q Learning.
 
     Args:
       states:  A batched representation of the states of the environments.
@@ -92,7 +93,6 @@ class ActionModel(with_metaclass(ABCMeta, Model)):
 
       If `actions` was a ndarray, returns a ndarray shaped `(batch_size,)` for
       the action-values associated with the provided list of actions.
-
     """
     pass
 
