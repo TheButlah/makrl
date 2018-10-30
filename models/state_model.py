@@ -25,7 +25,7 @@ class StateModel(with_metaclass(ABCMeta, Model)):
         tuple representing the shape of the environment's state space.
 
     Returns:
-      A batch of state-values as a numpy array.
+      A batch of state-values as a numpy array, shaped `(batch_size,)`
     """
     pass
 
@@ -34,15 +34,16 @@ class StateModel(with_metaclass(ABCMeta, Model)):
     """Updates the model based on experience gained from a given batch of
     observed state-action-reward transitions, each represented in separate numpy
     arrays. This function looks at the TD error for each step in the batch of
-    observations and uses that error to update the model. The update will
-    base its estimate of the return using the last value of the sequence, which
-    will be a return value instead of a reward value. This final return will be
-    based on some value determined by the `Agent`. It will be the best estimate
-    for the return experienced after the latest state in `observations`, taking
-    into account the actual experienced reward at least one step after the state
-    was visited, and hence will be more accurate than the current predicted
-    return at that state. By using this return, this function can compute the TD
-    errors and update the model.
+    observations and uses that error to update the model.
+
+    The update will base its estimate of the return using the last value in
+    `rewards`, which will be a return value instead of a reward value. This
+    final return will be based on some value determined by the `Agent`. It will
+    be the best estimate for the return experienced at the latest action, taking
+    into account the actual experienced reward at that action and possibly
+    future actions, and hence will be more accurate than the current predicted
+    return at that action. By using this return, this function can compute the
+    TD errors and update the model.
 
     Args:
       states:  A batch of observed states from transitions of the environment.
@@ -61,10 +62,11 @@ class StateModel(with_metaclass(ABCMeta, Model)):
       rewards:  A batch of observed rewards from transitions of the environment.
         Note that the last element of this ndarray will actually be a return and
         not a reward. Shaped `(batch_size, max_steps)`.
-      mu:  Weighting factors of the states. For example, these may be the ratios
-        computed from importance sampling, or the percentage of time spent in a
-        particular state. Shaped `(batch_size, max_steps)`. If `None`, no
-        weighting is applied.
+      mu:  Weighting factors of the states. This will determine how much weight
+        each state has when contributing to the TD error. For example, these may
+        be the ratios computed from importance sampling, or the percentage of
+        time spent in a particular state. Shaped `(batch_size, max_steps)`. If
+        `None`, no weighting is applied.
       num_steps:  Either a scalar or a list of integers shaped `(batch_size,)`
         representing the number of steps for each observation in the batch. This
         argument is needed as some observations' episodes may terminate,
@@ -73,7 +75,7 @@ class StateModel(with_metaclass(ABCMeta, Model)):
         assumed that all observations in the batch are `max_steps` long.
 
     Returns:
-      (loss, returns) where `loss` is the net loss/TD error for all steps
+      (loss, returns) where `loss` is the sum of loss/TD errors at each step
       averaged over the batch, and `returns` is the list of returns constructed
       from `rewards`, so that the `Agent` need not recompute those returns.
     """

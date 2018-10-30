@@ -46,27 +46,34 @@ class PolicyModel(with_metaclass(ABCMeta, Model)):
 
   @abstractmethod
   def predict_pi(self, states):
-    """Outputs the policy for a given batch of states.
-    Args:
-      states:  A batched representation of the state of the environment as a
-        numpy array.
+    """Predicts the desired action probabilities according to this policy for a
+    given batch of states.
 
-    Returns:  A batch of action-probabilities as a numpy array.
+    Args:
+      states:  A batched representation of the states of the environments.
+        Shaped `(batch_size,) + state_shape`, where `state_shape` is a tuple
+        representing the shape of the environment's state space.
+
+    Returns:  A batch of action-probabilities as a numpy array, shaped
+      `(batch_size,) + action_shape`, where `action_shape` is
+        a tuple representing the shape of the environment's action space.
     """
     pass
 
   @abstractmethod
   def update_pi(self, advantages, states):
     """Informs the model of the advantage values for a given batch of states.
-    Advantages are used instead of returns/values, because as long as the
-    baseline in an advantage function is not conditioned on any particular
-    action, the policy radient is unbiased and therefore advantages are more
-    general than returns/values.
+
+    Advantages are used instead of returns or value-estimates, because as long
+    as the baseline in an advantage function is not conditioned on taking a
+    particular action for the timestep being evaluated, the policy gradient is
+    unbiased. Therefore, advantages are more general than returns/values.
 
     Args:
-      advantages:  A batch of the advantage values as a numpy array. The model
-        will use this to improve.
-      states:  A batched representation of the state of the environment for
-        which the value function will be updated, as a numpy array.
+      advantages:  A batch of the advantage values as a numpy array, shaped
+        `(batch_size,)`
+      states:  A batched representation of the states of the environments.
+        Shaped `(batch_size,) + state_shape`, where `state_shape` is a
+        tuple representing the shape of the environment's state space.
     """
     pass
