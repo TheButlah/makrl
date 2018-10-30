@@ -40,52 +40,38 @@ class ActionModel(with_metaclass(ABCMeta, Model)):
 
   @abstractmethod
   def predict_q(self, states, actions=None):
-    """Predicts the action-value q for a batch of state-action pairs. If actions
-    is not an ndarray, a variety of computations on the action space can be
-    performed. For example, if actions is `None` or "argmax", this predicts the
-    value of a state using a greedy policy, which is used in algorithms such as
-    Q Learning.
+    """Predicts the action-value q for a batch of state-action pairs. If
+    `actions` is not an ndarray, a variety of computations on the action space
+    can be performed. For example, if actions is `None` or "argmax", this
+    greedily selects an action, which is used in many algorithms such as Q
+    Learning.
 
     Args:
       states:  A batched representation of the states of the environments.
         Shaped `(batch_size,) + state_shape`, where `state_shape` is a tuple
         representing the shape of the environment's state space.
-      actions:  Can be `None`, "argmax", a float in range (0,1) or an integer,
-        "all", or a batch of actions to evaluate the function for.
+      actions:  Can be `None`, "argmax", "all", or a batch of actions to
+        evaluate the function on.
 
         If `None` or "argmax", the actions will be selected greedily, where each
-        action will be selected so that the maximum value at that state will be
-        achieved.
+        action will be selected so that the maximum value at that state-action
+        pair will be achieved.
 
-        If a float in range (0,1) or an integer, each state will be evaluated on
-        a random subset of all possible actions, where the size of the subset is
-        determined by the provided percentage or number. Action space is sampled
-        without replacement, and therefore the number of samples should be less
-        than the size of the action space.
+        If "all", all actions will be evaluated for each state, i.e. no argmax
+        or random subset will be used.
 
-        If "all", all actions will be evaluated, i.e. no argmax or random subset
-        will be used.
-
-        If a ndarray, it will be treated as a particular action to take for each
-        element of the batch. Should be shaped
-        `(batch_size, len(action_shape))`, where `action_shape` is a tuple
-        representing the shape of the environment's action space. In other words
-        this will be a matrix with `batch_size` rows, where each row is a tuple
-        indexing the action in the action space.
+        If a ndarray, it will be treated as a batch of actions to match with the
+        batch of states, such that it will produce a batch of state-action pairs
+        shaped `(batch_size, len(action_shape))`, where `action_shape` is a
+        tuple representing the shape of the environment's action space. In other
+        words `actions` will be a matrix with `batch_size` rows, where each row
+        is a tuple used as the index of the action in the action space.
 
     Returns:
       If `actions` was `None` or "argmax", the output will be a
       `(values, actions)` tuple, where `values` is a ndarray shaped
       `(batch_size,)` and `actions` is a list of the index of the selected
-      action for each state in the action space, shaped
-      `(batch_size, len(action_shape))`.
-
-      If `actions` was a float or integer, the output will be a
-      `(values, actions)` tuple, where `values` is a ndarray shaped
-      `(batch_size, num_sampled_actions)` and actions is a ndarray shaped
-      `(batch_size, num_sampled_actions, len(action_shape))`.
-      `num_sampled_actions` is a number, which is either the integer provided or
-      based on the percentage times the cardinality of the action space.
+      actions in the action space, shaped `(batch_size, len(action_shape))`.
 
       If `actions` was "all", returns a ndarray shaped
       `(batch_size,) + action_shape` for the action-values at every possible
@@ -101,15 +87,16 @@ class ActionModel(with_metaclass(ABCMeta, Model)):
     """Updates the model based on experience gained from a given batch of
     observed state-action-reward transitions, each represented in separate numpy
     arrays. This function looks at the TD error for each step in the batch of
-    observations and uses that error to update the model. The update will
-    base its estimate of the return using the last value in `rewards`, which
-    will be a return value instead of a reward value. This final return will be
-    based on some value determined by the `Agent`. It will be the best estimate
-    for the return experienced at the latest action, taking into account the
-    actual experienced reward at that action and possibly future actions, and
-    hence will be more accurate than the current predicted return at that action.
-    By using this return, this function can compute the TD errors and update the
-    model.
+    observations and uses that error to update the model.
+
+    The update will base its estimate of the return using the last value in
+    `rewards`, which will be a return value instead of a reward value. This
+    final return will be based on some value determined by the `Agent`. It will
+    be the best estimate for the return experienced at the latest action, taking
+    into account the actual experienced reward at that action and possibly
+    future actions, and hence will be more accurate than the current predicted
+    return at that action. By using this return, this function can compute the
+    TD errors and update the model.
 
     Args:
       states:  A batch of observed states from transitions of the environment.
@@ -121,10 +108,11 @@ class ActionModel(with_metaclass(ABCMeta, Model)):
       rewards:  A batch of observed rewards from transitions of the environment.
         Note that the last element of this ndarray will actually be a return and
         not a reward. Shaped `(batch_size, max_steps)`.
-      mu:  Weighting factors of the states. For example, these may be the ratios
-        computed from importance sampling, or the percentage of time spent in a
-        particular state. Shaped `(batch_size, max_steps)`. If `None`, no
-        weighting is applied.
+      mu:  Weighting factors of the states. This will determine how much weight
+        each state has when contributing to the TD error. For example, these may
+        be the ratios computed from importance sampling, or the percentage of
+        time spent in a particular state. Shaped `(batch_size, max_steps)`. If
+        `None`, no weighting is applied.
       num_steps:  Either a scalar or a list of integers shaped `(batch_size,)`
         representing the number of steps for each observation in the batch. This
         argument is needed as some observations' episodes may terminate,
@@ -133,7 +121,7 @@ class ActionModel(with_metaclass(ABCMeta, Model)):
         assumed that all observations in the batch are `max_steps` long.
 
     Returns:
-      (loss, returns) where `loss` is the net loss/TD error for all steps
+      (loss, returns) where `loss` is the sum of loss/TD errors at each step
       averaged over the batch, and `returns` is the list of returns constructed
       from `rewards`, so that the `Agent` need not recompute those returns.
     """
