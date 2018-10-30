@@ -30,7 +30,6 @@ class Model(with_metaclass(ABCMeta, object)):
     """
     self._s_shape = tuple(state_shape)
     self._step_major = step_major
-    pass
 
   @abstractmethod
   def save(self, save_path):
@@ -43,30 +42,58 @@ class Model(with_metaclass(ABCMeta, object)):
 
   @property
   def model_state(self):
-    """Gets the current internal state of the model. For example, in RNN based
-    models, this returns the hidden state vector of the model, but in linear
-    models will return `None`. Can be used later to reset the state of the model
-    to allow for non-sequential calls, such as when an episode terminates or for
-    multiple evaluations per timestep, such as in Expected SARSA.
+    """Gets the current batched internal state of the model. Note that this is
+    an entirely different concept from the environment state.
 
-    NOTE: this is NOT the environment state.
+    `model_state` can be used later to reset the state of the model to allow for
+    non-sequential calls to the model methods, such as to indicate when a new
+    episode should begin or when performing multiple method calls per timestep,
+    such as in Expected SARSA. It is the responsibility of the `Agent` to
+    properly save and restore this internal state is it is fundamental to any
+    sequence based model, regardless of whether the particular `Model` in
+    question is actually non-markovian (stateful).
+
+
+    In internally stateless/markovian models, that is, models conditioned only
+    on the present environment state and no prior states, model_state will
+    return `None`.
+
+    For internally stateful/non-markovian models, that is, models conditioned on
+    both present environment states/actions and some internal state,
+    `model_state` will return a batch of internal states - one for each episode
+    in the latest method invoked on this model.
+
+    Here are a few examples of what `model_state` might be:
+      Stacked LSTM:  Batch of a list of LSTM state tuples for each LSTM layer
+        for each episode.
+
+      Linear model on latest 4 environment states:  Batch of last 3 environment
+        states seen for each episode. These will be concatenated with the target
+        state and fed to a linear model.
+
+      Time-series CNN:  Batch of last n-1 seen environment states, where n is
+        the max number of past timesteps to examine.
+
+      CNN only on current environment state:  `None`
 
     Returns:
-      The current internal state.
+      The current batched internal state for non-markovian models, or `None` for
+      markovian models.
     """
     return None
 
   @model_state.setter
   def model_state(self, state):
-    """Sets the current internal state of the model. Should be a valid previous
-    state of the model. If `state` is `None`, will set the internal state of the
-    model to its initial default state.
+    """Sets the current batched internal state of the model. Note that this is
+    an entirely different concept from the environment state.
 
-    NOTE: this is NOT the environment state.
+    The `Agent` should ensure that the new `model_state` will match along the
+    batch dimension with the next method invocation made on this `Model`.
 
     Args:
-      state:  The desired internal state of the model. If `None`, resets the
-        model to its initial default state.
+      state:  The desired batched internal state of the model. If `None`, resets
+        all states. Otherwise, setting any particular state in the batch to
+        `None` will reset that state.
     """
     pass
 

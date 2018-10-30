@@ -16,17 +16,27 @@ class PolicyModel(with_metaclass(ABCMeta, Model)):
   agent."""
 
   @abstractmethod
-  def __init__(self, state_shape, action_shape, load_model=None):
+  def __init__(self, state_shape, action_shape, step_major=False,
+    load_model=None):
     """Constructs the model and initializes it.
 
     Args:
-      state_shape:  The shape tuple of a single state tensor.
-      action_shape:  The shape tuple of a single action tensor.
+      state_shape:  A tuple representing the shape of the environment's state
+        space.
+      action_shape:  A tuple representing the shape of the environment's action
+        space.
+      step_major:  Whether or not the first dimension of any arguments with a
+        step dimension will be the first axis or the second. If `True`, the
+        shapes described for any such arguments should have their first two
+        dimensions transposed. There may be performance benefits to having the
+        step dimension first instead of the batch dimension, but because batched
+        computation typically has the batch dimension first, this parameter is
+        `False` by default.
       load_model:  A string giving a path to the model to load.
     """
-    super(PolicyModel, self).__init__(load_model=load_model)
-    self._s_shape = (None,) + tuple(state_shape)
-    self._a_shape = (None,) + tuple(action_shape)
+    super(PolicyModel, self).__init__(
+      state_shape, step_major=step_major, load_model=load_model)
+    self._a_shape = tuple(action_shape)
     pass
 
   @abstractmethod
