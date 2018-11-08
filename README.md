@@ -1,16 +1,3 @@
-# RL-Halite
-A reinforcement learning agent for the game halite.io
+# RL-Halite halite system
 
-## TODO
-
-- [ ] Integrate environment
-
-- [ ] Preprocess environment
-
-- [ ] Develop MADP action and state vector representation
-
-- [ ] Develop CNN/ MLP for agent
-
-- [ ] Integrate PPO Algorithm
-
-- [ ] Win
+Code for creating workflow and package systems for Halite (in RL).
