@@ -22,7 +22,7 @@ To install local packges, run the following commands (from current directory):
  - For haliterl extension
 
     ```bash
-    cd halite && python setup.py install
+    cd haliterl && python setup.py install
     ```
 
 ## Anything Else:
