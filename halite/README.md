@@ -1,5 +1,9 @@
 # Starter Kit
 
+## Running Setup
+
+python setup.py install
+
 ## Halite III starter kit components
 * MyBot.{extension}, a starter bot outline
 * /hlt directory, which contains modifiable helper functions for your bot
