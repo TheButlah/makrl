@@ -61,19 +61,31 @@ class PolicyModel(with_metaclass(ABCMeta, Model)):
     pass
 
   @abstractmethod
-  def update_pi(self, advantages, states):
-    """Informs the model of the advantage values for a given batch of states.
-
-    Advantages are used instead of returns or value-estimates, because as long
-    as the baseline in an advantage function is not conditioned on taking a
-    particular action for the timestep being evaluated, the policy gradient is
-    unbiased. Therefore, advantages are more general than returns/values.
+  def update_pi(self, states, actions, advantages, num_steps=None):
+    """Updates the model based on experience gained from a given batch of
+    observed environment transitions. `advantages` is provided by an `Agent`,
+    usually via another model acting as the critic/advantage function, trained
+    separately. Note that using advantages instead of returns is explicitly more
+    general, as it reduces the variance of the model and the advantage is equal
+    to the return when the baseline is 0. This function then uses the provided
+    data to maximize the policy gradient at each step in the observation
+    sequence.
 
     Args:
-      advantages:  A batch of the advantage values as a numpy array, shaped
-        `(batch_size,)`
-      states:  A batched representation of the states of the environments.
-        Shaped `(batch_size,) + state_shape`, where `state_shape` is a
+      states:  A batch of observed states from transitions of the environment.
+        Shaped `(batch_size, max_steps) + state_shape`, where `state_shape` is a
         tuple representing the shape of the environment's state space.
+      actions:  A batch of observed states from transitions of the environment.
+        Shaped `(batch_size, max_steps) + action_shape`, where `action_shape` is
+        a tuple representing the shape of the environment's action space.
+      advantages:  A batch of advantages at each step in the observation
+        sequence. Shaped `(batch_size, max_steps)`.
+      num_steps:  Either a scalar or a list of integers shaped `(batch_size,)`
+        representing the number of steps for each observation in the batch. This
+        argument is needed as some observations' episodes may terminate,
+        resulting in a non-uniform number of steps for each observation. No
+        element of `num_steps` may be greater than `max_steps` or less than 1.
+        If `None`, it is assumed that all observations in the batch are
+        `max_steps` long.
     """
     pass

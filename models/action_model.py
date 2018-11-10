@@ -102,7 +102,7 @@ class ActionModel(with_metaclass(ABCMeta, Model)):
       states:  A batch of observed states from transitions of the environment.
         Shaped `(batch_size, max_steps) + state_shape`, where `state_shape` is a
         tuple representing the shape of the environment's state space.
-      actions:  A batch of observed states from transitions of the environment.
+      actions:  A batch of observed actions from transitions of the environment.
         Shaped `(batch_size, max_steps) + action_shape`, where `action_shape` is
         a tuple representing the shape of the environment's action space.
       rewards:  A batch of observed rewards from transitions of the environment.
@@ -110,15 +110,16 @@ class ActionModel(with_metaclass(ABCMeta, Model)):
         not a reward. Shaped `(batch_size, max_steps)`.
       mu:  Weighting factors of the states. This will determine how much weight
         each state has when contributing to the TD error. For example, these may
-        be the ratios computed from importance sampling, or the percentage of
-        time spent in a particular state. Shaped `(batch_size, max_steps)`. If
-        `None`, no weighting is applied.
+        be the ratios computed from importance sampling, or a number based on
+        the percentage of time spent in a particular state. Shaped
+        `(batch_size, max_steps)`. If `None`, no weighting is applied.
       num_steps:  Either a scalar or a list of integers shaped `(batch_size,)`
         representing the number of steps for each observation in the batch. This
         argument is needed as some observations' episodes may terminate,
         resulting in a non-uniform number of steps for each observation. No
-        element of `num_steps` may be greater than `max_steps`. If `None`, it is
-        assumed that all observations in the batch are `max_steps` long.
+        element of `num_steps` may be greater than `max_steps` or less than 1.
+        If `None`, it is assumed that all observations in the batch are
+        `max_steps` long.
 
     Returns:
       (loss, returns) where `loss` is the sum of loss/TD errors at each step

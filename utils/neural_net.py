@@ -3,12 +3,10 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 from __future__ import division
-
-from time import strftime
-
 from six.moves import range, zip
 
-from . import ActionModel
+from abc import ABCMeta, abstractmethod
+from six import with_metaclass
 
 import tensorflow as tf
 import numpy as np
@@ -16,11 +14,13 @@ import os
 
 import layers as l
 
+from time import strftime
 
-class FCQNet(ActionModel):
-  """A class that represents an Fully Connected Q Network that can be used by an
-  agent."""
 
+class NeuralNet(with_metaclass(ABCMeta, object)):
+  """A class that represents a Neural Network"""
+
+  @abstractmethod
   def __init__(self, state_shape, action_shape,
     hidden_neuron_list=None, learning_rate=0.001, step_major=False,
     scope=None,
