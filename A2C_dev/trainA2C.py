@@ -299,7 +299,7 @@ def main():
     # config.log_device_placement = True
 
     #envs = SubprocVecEnv([env.make_train_0,env.make_train_1,env.make_train_2,env.make_train_3,env.make_train_4,env.make_train_5,env.make_train_6,env.make_train_7,env.make_train_8,env.make_train_9,env.make_train_10,env.make_train_11,env.make_train_12,env.make_train_13,env.make_train_14,env.make_train_15])
-    envs = SubprocVecEnv([env.make_train_16])
+    envs = SubprocVecEnv([env.make_train_MountainCarContinuous])
 
     with tf.Session(config=config) as sess:
        learn(agent_init=A2CAgent,
