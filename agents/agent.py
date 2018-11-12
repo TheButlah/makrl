@@ -14,11 +14,10 @@ class Agent(with_metaclass(ABCMeta, object)):
   environment."""
 
   @abstractmethod
-  def __init__(self, model):
+  def __init__(self):
     """Constructs an agent and initializes it.
 
     Args:
-      model:  The model that the agent will use to model its required functions.
     """
     pass
 
