@@ -15,7 +15,7 @@ setuptools.setup(
   packages=setuptools.find_packages(),
   classifiers=(
     "Programming Language :: Python :: 3",
-    # "Programming Language :: Python :: 2",
+    "Programming Language :: Python :: 2",
     "Intended Audience :: Science/Research",
     "Operating System :: OS Independent",
     "License :: Free for non-commercial use",
@@ -26,6 +26,7 @@ setuptools.setup(
     'six',
     'logzero',
     'gym',
+    'atari-py',
     'keras',
   ],
 )
