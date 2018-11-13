@@ -26,6 +26,7 @@ setuptools.setup(
     'six',
     'logzero',
     'gym',
+    'atari-py',  # version of atari dependency that also supports windows
     'keras',
   ],
 )

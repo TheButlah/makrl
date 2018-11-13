@@ -11,9 +11,10 @@ from six.moves import range, zip
 import sys
 import collections
 import multiprocessing
-from multiprocessing import Process, Pipe
-
 import numpy as np
+
+from multiprocessing import Process, Pipe
+from logzero import logger
 
 
 def num_cores():
@@ -23,33 +24,39 @@ def num_cores():
 
 def worker(pipe, seed, env_fn_wrapper):
   """Entry point for the worker subprocess"""
-  env = env_fn_wrapper.obj()
-  env.seed(seed)
-  while True:
-    cmd, data = pipe.recv()
-    if cmd == 'step':
-      ob, reward, done, info = env.step(data)
-      total_info = info.copy()  # Pass by value instead of reference
-      if done:
+  try:
+
+    env = env_fn_wrapper.obj()
+    env.seed(seed)
+    while True:
+      cmd, data = pipe.recv()
+      if cmd == 'step':
+        ob, reward, done, info = env.step(data)
+        total_info = info.copy()  # Pass by value instead of reference
+        if done:
+          ob = env.reset()
+        pipe.send((ob, reward, done, total_info))
+      elif cmd == 'reset':
         ob = env.reset()
-      pipe.send((ob, reward, done, total_info))
-    elif cmd == 'reset':
-      ob = env.reset()
-      pipe.send(ob)
-    elif cmd == 'close':
-      pipe.close()
-      break
-    elif cmd == 'get_spaces':
-      pipe.send((env.action_space, env.observation_space))
-    elif cmd == 'monitor':
-      is_monitor, is_train, experiment_dir, record_video_every = data
-      env.monitor(is_monitor, is_train, experiment_dir, record_video_every)
-    elif cmd == 'render':
-      env.render()
-    elif cmd == 'seed':
-      env.seed(data)
-    else:
-      raise NotImplementedError
+        pipe.send(ob)
+      elif cmd == 'close':
+        pipe.close()
+        break
+      elif cmd == 'get_spaces':
+        pipe.send((env.action_space, env.observation_space))
+      elif cmd == 'monitor':
+        is_monitor, is_train, experiment_dir, record_video_every = data
+        env.monitor(is_monitor, is_train, experiment_dir, record_video_every)
+      elif cmd == 'render':
+        env.render()
+      elif cmd == 'seed':
+        env.seed(data)
+      else:
+        raise NotImplementedError
+  except Exception as e:
+    pipe.close()  # Doesn't seem to matter
+    # logger.error(e)
+    exit(-1)
 
 
 class CloudpickleWrapper(object):
@@ -69,9 +76,11 @@ class CloudpickleWrapper(object):
 
 
 class BatchedEnv(object):
+  # TODO: Figure out how to deal with errors in subprocesses
   def __init__(self, env_fns):
     """env_fns: list of functions to construct the envs for the subprocs.
     NOTE: Action/observation spaces must be identical for all envs."""
+    logger.debug("Constructing `BatchedEnv`")
     self._num_envs = len(env_fns)
     # The two ends of each pipe, one pipe per env. `p_to_parents` given to
     # the subprocesses to communicate with parent, `p_to_workers` given to
@@ -88,7 +97,10 @@ class BatchedEnv(object):
       for (p_to_parent, env_fn) in zip(self._p_to_parents, env_fns)]
 
     # Start the subprocesses
+    logger.debug("Starting subprocesses...")
     for p in self._ps:
+      # NOT the same as unix daemon. Parent will kill children when it exits
+      p.daemon = True
       p.start()
 
     # Identify the action/obs spaces.
@@ -100,42 +112,48 @@ class BatchedEnv(object):
     """Steps the environments based on the given batch of actions.
 
     Returns:
-      (obs, rewards, dones, infos)
+      (states, rewards, dones, infos)
     """
     for pipe, action in zip(self._p_to_workers, actions):
       pipe.send(('step', action))
     results = [pipe.recv() for pipe in self._p_to_workers]
-    obs, rews, dones, infos = zip(*results)
-    # TODO: what is infos?
+    states, rewards, dones, infos = zip(*results)
     self._step_counters += 1
-    return np.stack(obs), np.stack(rews), np.stack(dones), infos
+    return np.stack(states), np.stack(rewards), np.stack(dones), infos
 
-  def reset(self, env_ids=None):
+  def reset(self, mask=None):
     """Resets some or all environments.
 
     Args:
-      env_ids:  If `None`, reset all envs. Otherwise, `env_ids` should be a
-        list of the indices of envs to reset in the batch.
+      mask:  If `None`, reset all envs. Otherwise, should be a boolean array
+        indicating the environments to reset.
 
     Returns:
-      A ndarray of shape `(len(env_ids),) + observation_space`.
+      A ndarray of shape `(num_envs,) + observation_space`.
     """
-    if env_ids:
-      assert (len(env_ids) <= self.num_envs
-              and {} == set(env_ids) - set(range(self.num_envs)))
-      pipes = [self._p_to_workers[i] for i in env_ids]
-      self._step_counters[env_ids] = 0
+    if mask is not None:
+      num_reset = np.count_nonzero(mask)
+      if num_reset == 0:
+        return None
+
+      logger.debug("Resetting %d envs" % num_reset)
+      self._step_counters[mask] = 0
+
+      [pipe.send(('reset', None))
+       for pipe, done in zip(self._p_to_workers, mask) if done]
+
+      return np.stack([pipe.recv()
+                       for pipe, done in zip(self._p_to_workers, mask)
+                       if done])
     else:
-      pipes = self._p_to_workers
+      logger.debug("Resetting all envs")
       self._step_counters.fill(0)
-
-    for pipe in pipes:
-      pipe.send(('reset', None))
-
-    return np.stack([pipe.recv() for pipe in pipes])
+      [pipe.send(('reset', None)) for pipe in self._p_to_workers]
+      return np.stack([pipe.recv() for pipe in self._p_to_workers])
 
   def close(self):
     """Destroy the batch of environments and their processes."""
+    logger.debug("Killing environments...")
     for pipe in self._p_to_workers:
       pipe.send(('close', None))
     for p in self._ps:
@@ -162,8 +180,10 @@ class BatchedEnv(object):
     """
     if env_ids:
       pipes = [self._p_to_workers[i] for i in env_ids]
-    else:
+    elif env_ids is None:
       pipes = self._p_to_workers
+    else:
+      raise ValueError("invalid argument for `env_ids`!")
     for pipe in pipes:
       pipe.send(('render', None))
 
