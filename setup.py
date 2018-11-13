@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
   name="rl-halite",
-  version="0.0.0",
+  version="0.0.1",
   author="Ryan Butler",
   author_email="thebutlah@gmail.com",
   description="A reinforcement learning agent for the halite game.",
@@ -26,7 +26,6 @@ setuptools.setup(
     'six',
     'logzero',
     'gym',
-    'atari-py',  # version of atari dependency that also supports windows
     'keras',
   ],
 )
