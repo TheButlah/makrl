@@ -26,6 +26,7 @@ setuptools.setup(
     'six',
     'logzero',
     'gym',
+    'atari-py',
     'keras',
   ],
 )
