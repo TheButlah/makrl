@@ -7,7 +7,8 @@ import hlt
 # This library contains constant values.
 from hlt import constants
 
-# This library contains direction metadata to better interface with the game.
+# This library contains direction metadata to better interface
+# ce with the game.
 from hlt.positionals import Direction
 
 # This library allows you to generate random numbers.
@@ -16,8 +17,9 @@ import random
 # Logging allows you to save messages for yourself. This is required because the regular STDOUT
 #   (print statements) are reserved for the engine-bot communication.
 import logging
-logging.basicConfig(filename='shubhom_test.log',level=logging.DEBUG)
+logging.basicConfig(filename='replays/shubhom_test.log',level=logging.DEBUG)
 logging.info('Start time: %s' %datetime.datetime.now().ctime())
+
 """ <<<Game Begin>>> """
 
 # This game object contains the initial game state.
