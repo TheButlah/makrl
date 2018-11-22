@@ -1,5 +1,5 @@
 # Trash experiments
-experiments/
+experiments/*
 !experiments/gym_q_learner.py
 
 # PyCharm

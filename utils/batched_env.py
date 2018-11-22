@@ -1,5 +1,6 @@
-"""This file is a heavily modified version of the code here:
-https://github.com/MG2033/A2C/blob/master/envs/subproc_vec_env.py"""
+"""This file is was originally inspired by the code here:
+https://github.com/MG2033/A2C/blob/master/envs/subproc_vec_env.py. It has since
+evolved heavily, but we provide the original link as an acknowledgement."""
 
 # Python 2-3 Compatibility
 from __future__ import absolute_import
@@ -76,10 +77,17 @@ class CloudpickleWrapper(object):
 
 
 class BatchedEnv(object):
+  """Class to synchronously batch together multiple environments. Exposes an
+  OpenAI Gym style API to synchronously interact with environments, taking
+  advantage of multithreading where applicable."""
+
   # TODO: Figure out how to deal with errors in subprocesses
   def __init__(self, env_fns):
-    """env_fns: list of functions to construct the envs for the subprocs.
-    NOTE: Action/observation spaces must be identical for all envs."""
+    """env_fns: list of functions that construct the environments to batch
+    together. Each environment should have a gym style api, compatible via duck
+    typing.
+
+    NOTE: Action/observation spaces must be identical for all environments."""
     logger.debug("Constructing `BatchedEnv`")
     self._num_envs = len(env_fns)
     # The two ends of each pipe, one pipe per env. `p_to_parents` given to
@@ -125,8 +133,8 @@ class BatchedEnv(object):
     """Resets some or all environments.
 
     Args:
-      mask:  If `None`, reset all envs. Otherwise, should be a boolean array
-        indicating the environments to reset.
+      mask:  If `None`, reset all envs. Otherwise, should be a boolean mask
+        where `True` indicates the environments to reset.
 
     Returns:
       A ndarray of shape `(num_envs,) + observation_space`.
