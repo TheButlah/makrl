@@ -5,7 +5,10 @@ from __future__ import unicode_literals
 from __future__ import division
 from six.moves import range, zip
 
-from . import Agent
+import sys
+sys.path.append("../")
+
+from agents import Agent
 
 from collections import defaultdict
 

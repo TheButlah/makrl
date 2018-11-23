@@ -7,7 +7,7 @@ import numpy as np
 from baselines import logger
 from baselines.common.vec_env.subproc_vec_env import SubprocVecEnv
 from baselines.common import explained_variance
-from A2C_model import A2C_model, A2CNetwork
+from A2C_model import A2CModel, A2CNetwork
 from A2C_agent import A2CAgent
 
 
@@ -120,7 +120,7 @@ class Runner(AbstractEnvRunner):
             delta = mb_rewards[t] + (self.gamma * np.squeeze(nextvalues) * nextnonterminal) - np.squeeze(mb_values[t])
             
             # print("delta",delta.shape)
-            # Advantage = delta + gamma *  λ (lambda) * nextnonterminal  * lastgaelam
+            # Advantage = delta + gamma *  (lambda) * nextnonterminal  * lastgaelam
             mb_advantages[t] = lastgaelam = delta + self.gamma * self.lam * nextnonterminal * lastgaelam
 
         # Returns
@@ -144,9 +144,9 @@ def constfn(val):
 
 
 def learn(  sess,
-            agent_init=A2CAgent,
-            model_init=A2CModel,
-            network_init=A2CNetwork,
+            agent_init,
+            model_init,
+            network_init,
             env,
             nsteps,
             total_timesteps,
@@ -242,7 +242,7 @@ def learn(  sess,
                 end = start + batch_train_size
                 mbinds = indices[start:end]
                 slices = (arr[mbinds] for arr in (obs, actions, returns, values, neglogpacs))
-                mb_losses.append(agent.train_step(*slices, lrnow, cliprangenow))
+                mb_losses.append(agent.train_step(slices, lrnow, cliprangenow))
 
 
         # Feedforward --> get losses --> update
