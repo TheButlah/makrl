@@ -23,12 +23,29 @@ def num_cores():
   return multiprocessing.cpu_count()
 
 
-def worker(pipe, seed, env_fn_wrapper):
-  """Entry point for the worker subprocess"""
-  try:
+def worker(parent_end, worker_end, seed, env_fn_wrapper):
+  """Entry point for the worker subprocess.
 
-    env = env_fn_wrapper.obj()
-    env.seed(seed)
+  Args:
+    parent_end:  The parent's end of the pipe.
+    worker_end:  The worker's end of the pipe.
+    seed:  A positive integer to use as the seed
+    env_fn_wrapper:  A `CloudpickleWrapper` for a function to make the env.
+  """
+  pipe = worker_end
+  del worker_end
+
+  # Child processes inherit parent file descriptors, regardless of whether we
+  # explicitly pass the parent end of the pipe or not. By passing the parent's
+  # end, we can close our handle on the file descriptor, meaning that once the
+  # parent does the same, we can detect that the pipe has been closed.
+  parent_end.close()  # close in order to detect when parent closes pipe
+  del parent_end
+
+  env = env_fn_wrapper.obj()
+  env.seed(seed)
+
+  try:
     while True:
       cmd, data = pipe.recv()
       if cmd == 'step':
@@ -41,7 +58,6 @@ def worker(pipe, seed, env_fn_wrapper):
         ob = env.reset()
         pipe.send(ob)
       elif cmd == 'close':
-        pipe.close()
         break
       elif cmd == 'get_spaces':
         pipe.send((env.action_space, env.observation_space))
@@ -55,9 +71,12 @@ def worker(pipe, seed, env_fn_wrapper):
       else:
         raise NotImplementedError
   except Exception as e:
-    pipe.close()  # Doesn't seem to matter
-    # logger.error(e)
-    exit(-1)
+    # We need to avoid throwing exceptions as the printout is not atomic
+    # TODO: Figure out how to make this atomic
+    sys.stderr.write(str(e))
+    sys.stderr.flush()
+  finally:
+    pipe.close()  # This is closed on gc, so it's only here for explicitness
 
 
 class CloudpickleWrapper(object):
@@ -90,30 +109,35 @@ class BatchedEnv(object):
     NOTE: Action/observation spaces must be identical for all environments."""
     logger.debug("Constructing `BatchedEnv`")
     self._num_envs = len(env_fns)
-    # The two ends of each pipe, one pipe per env. `p_to_parents` given to
-    # the subprocesses to communicate with parent, `p_to_workers` given to
+    # The two ends of each pipe, one pipe per env. `worker_ends` given to
+    # the subprocesses to communicate with parent, `parent_ends` given to
     # parent to communicate with workers
-    self._p_to_workers, self._p_to_parents = zip(
+    self._parent_ends, self._worker_ends = zip(
       *[Pipe() for _ in range(self.num_envs)])
 
     # Build the subprocesses
     self._ps = [
       Process(target=worker, args=(
-        p_to_parent,
+        parent_end,
+        worker_end,
         np.random.randint(2**31),
         CloudpickleWrapper(env_fn)))
-      for (p_to_parent, env_fn) in zip(self._p_to_parents, env_fns)]
+      for (parent_end, worker_end, env_fn)
+      in zip(self._parent_ends, self._worker_ends, env_fns)]
 
     # Start the subprocesses
     logger.debug("Starting subprocesses...")
-    for p in self._ps:
-      # NOT the same as unix daemon. Parent will kill children when it exits
+    for p, worker_end in zip(self._ps, self._worker_ends):
+      # Causes parent to kill children on exit. NOT the same as unix daemon.
+      # Note that in the case of SIGTERM
       p.daemon = True
       p.start()
+      # Once worker end is given to worker process, close the parent's copy
+      worker_end.close()
 
     # Identify the action/obs spaces.
-    self._p_to_workers[0].send(('get_spaces', None))
-    self._action_space, self._observation_space = self._p_to_workers[0].recv()
+    self._parent_ends[0].send(('get_spaces', None))
+    self._action_space, self._observation_space = self._parent_ends[0].recv()
     self._step_counters = np.zeros(self.num_envs, dtype=np.int16)
 
   def step(self, actions):
@@ -122,9 +146,9 @@ class BatchedEnv(object):
     Returns:
       (states, rewards, dones, infos)
     """
-    for pipe, action in zip(self._p_to_workers, actions):
+    for pipe, action in zip(self._parent_ends, actions):
       pipe.send(('step', action))
-    results = [pipe.recv() for pipe in self._p_to_workers]
+    results = [pipe.recv() for pipe in self._parent_ends]
     states, rewards, dones, infos = zip(*results)
     self._step_counters += 1
     return np.stack(states), np.stack(rewards), np.stack(dones), infos
@@ -148,33 +172,34 @@ class BatchedEnv(object):
       self._step_counters[mask] = 0
 
       [pipe.send(('reset', None))
-       for pipe, done in zip(self._p_to_workers, mask) if done]
+       for pipe, done in zip(self._parent_ends, mask) if done]
 
       return np.stack([pipe.recv()
-                       for pipe, done in zip(self._p_to_workers, mask)
+                       for pipe, done in zip(self._parent_ends, mask)
                        if done])
     else:
       logger.debug("Resetting all envs")
       self._step_counters.fill(0)
-      [pipe.send(('reset', None)) for pipe in self._p_to_workers]
-      return np.stack([pipe.recv() for pipe in self._p_to_workers])
+      [pipe.send(('reset', None)) for pipe in self._parent_ends]
+      return np.stack([pipe.recv() for pipe in self._parent_ends])
 
   def close(self):
     """Destroy the batch of environments and their processes."""
     logger.debug("Killing environments...")
-    for pipe in self._p_to_workers:
+    for pipe in self._parent_ends:
       pipe.send(('close', None))
-    for p in self._ps:
+    for p, parent_end in zip(self._ps, self._parent_ends):
       p.join()
+      parent_end.close()  # This is gc'ed on exit, but its here for explicitness
 
-    self._p_to_workers = self._p_to_parents = self._ps = None
+    self._parent_ends = self._worker_ends = self._ps = None
     self._action_space = self._observation_space = self._num_envs = None
     self._step_counters = None
 
   def monitor(self, is_monitor=True, is_train=True, experiment_dir="",
               record_video_every=10):
     # TODO: Figure out how this works
-    for pipe in self._p_to_workers:
+    for pipe in self._parent_ends:
       pipe.send((
         'monitor',
         (is_monitor, is_train, experiment_dir, record_video_every)))
@@ -187,9 +212,9 @@ class BatchedEnv(object):
         list of the indices of envs to render in the batch.
     """
     if env_ids:
-      pipes = [self._p_to_workers[i] for i in env_ids]
+      pipes = [self._parent_ends[i] for i in env_ids]
     elif env_ids is None:
-      pipes = self._p_to_workers
+      pipes = self._parent_ends
     else:
       raise ValueError("invalid argument for `env_ids`!")
     for pipe in pipes:
@@ -204,10 +229,10 @@ class BatchedEnv(object):
       `None` to indicate a new random seed, or an int.
     """
     if seed_map:
-      [self._p_to_workers[id].send(('seed', s)) for (id, s) in seed_map.items()]
+      [self._parent_ends[id].send(('seed', s)) for (id, s) in seed_map.items()]
     else:
       [pipe.send(('seed', np.random.randint(2**31)))
-       for pipe in self._p_to_workers]
+       for pipe in self._parent_ends]
 
   @property
   def num_envs(self):
