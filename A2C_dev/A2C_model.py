@@ -91,7 +91,7 @@ class A2CModel(PolicyModel,ValueModel):
                 max_grad_norm,
                 images=True):
 
-        super(PolicyModel, self).__init__(ob_space, action_space, step_major=False,load_model=None)
+        super(A2CModel, self).__init__(ob_space, action_space, step_major=False, load_model=None)
         self.sess = sess
 
         self.ent_coef = ent_coef
@@ -186,14 +186,14 @@ class A2CModel(PolicyModel,ValueModel):
         print("*** Method not implemented: %s at line %s of %s" % (method, line, fileName))
         sys.exit(1)
 
-    def save(self,save_path):
+    def save(self, save_path):
         """
         Save the model
         """
         saver = tf.train.Saver()
         saver.save(self.sess, save_path)
 
-    def load(self,load_path):
+    def load(self, load_path):
         """
         Load the model
         """
@@ -232,7 +232,7 @@ class A2CModel(PolicyModel,ValueModel):
         return policy_loss, value_loss, policy_entropy
 
 
-class A2C_PPOModel(PolicyModel,ValueModel):
+class A2C_PPOModel(PolicyModel, ValueModel):
     def __init__(self,
                 sess,
                 policy,
@@ -245,7 +245,7 @@ class A2C_PPOModel(PolicyModel,ValueModel):
                 max_grad_norm,
                 images=True):
 
-        super(PolicyModel, self).__init__(ob_space, action_space, step_major=False,load_model=None)
+        super(A2C_PPOModel, self).__init__(ob_space, action_space, step_major=False, load_model=None)
         self.sess = sess
 
         self.ent_coef = ent_coef
@@ -264,13 +264,13 @@ class A2C_PPOModel(PolicyModel,ValueModel):
 
         # CREATE OUR TWO MODELS
         # Step_model that is used for sampling
-        self.step_model = policy(self.sess, ob_space, action_space, nenvs, 1, reuse=False,images=images)
+        self.step_model = policy(self.sess, ob_space, action_space, nenvs, 1, reuse=False, images=images)
 
         # Test model for testing our agent
         #test_model = policy(sess, ob_space, action_space, 1, 1, reuse=False)
 
         # Train model for training
-        self.train_model = policy(self.sess, ob_space, action_space, nenvs*nsteps, nsteps, reuse=True,images=images)
+        self.train_model = policy(self.sess, ob_space, action_space, nenvs*nsteps, nsteps, reuse=True, images=images)
 
 
         self.value_pred = self.train_model.v
