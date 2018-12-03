@@ -17,6 +17,9 @@ import random
 #   (print statements) are reserved for the engine-bot communication.
 import logging
 
+# import various dependencies
+import numpy as np
+
 """ <<<Game Begin>>> """
 
 # This game object contains the initial game state.
@@ -31,6 +34,61 @@ game.ready("MyPythonBot")
 logging.info("Successfully created bot! My Player ID is {}.".format(game.my_id))
 
 """ <<<Game Loop>>> """
+# SET UP MAPPINGS FOR FEATURE DICTS #
+#####################################
+num_enemies = len(game.players)-1
+# list of features along with lists of corresponding aliases
+feature_list = [
+    ["halite", "h"],
+    ["friendly_ships", "fs"],
+    ["friendly_drops", "fd"],
+    ["enemy_ships", "es"],
+    ["enemy_drops", "ed"],
+]
+num_features = len(feature_list)
+
+f_idx = feature_idx = {}
+
+for idx, names in enumerate(feature_list):
+    for name in names:
+        feature_idx[name] = idx
+
+# generate state
+def generate_state(game_map, me, old_state=None):
+    map_shape = (game_map.height, game_map.width)
+
+    # Build a ndarray to work on
+    if old_state is None:
+        state = np.zeros((*map_shape, num_features), dtype=np.int8)
+    else:
+        state = old_state
+
+    # Update halite counts
+    for r, row in enumerate(game_map._cells):
+        # bit length is used for fast log_2 
+        state[r, :, feature_idx['h']] = map(lambda x: min(4096, x.halite).bit_length(), row)
+
+    # Update ship locations
+    for player in game.players.values():
+        ships = player._ships.values()
+        drops = player._dropoffs.values()
+        
+        # Helper code to deal with friendly vs enempy
+        if player is me:
+            s = 'fs'
+            d = 'fd'
+        else:
+            s = 'es'
+            d = 'ed'
+
+        # Update Ships
+        for ship in ships:
+            state[ship.position.y, ship.position.x, feature_idx[s]] = 1
+        # Update dropoffs
+        for drop in drops:    
+            state[drop.position.y, drop.position.x, feature_idx[d]] = 1
+
+    return state
 
 while True:
     # This loop handles each turn of the game. The game object changes every turn, and you refresh that state by
