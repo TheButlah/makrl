@@ -2,8 +2,9 @@
 experiments/*
 !experiments/gym_q_learner.py
 
-# PyCharm
+# IDEs
 .idea/
+.vscode/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
