@@ -24,14 +24,13 @@ from utils import BatchedEnv
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-args = None
 
 
 def main():
   # Parse args and set up logger #
   ################################
-  parse_args()
-  setup_logger()
+  args = parse_args()
+  setup_logger(args.save_to, args.verbosity)
   logger.debug("Logger created and args parsed!")
 
   # Print the command line arguments the program ran with
@@ -84,7 +83,7 @@ def main():
 
 
 def parse_args():
-  """Parse the command line arguments"""
+  """Parse the command line arguments, and return them."""
   parser = argparse.ArgumentParser(
     description="Trains a q-learning agent on the Cart-Pole-V1 task.")
 
@@ -162,7 +161,6 @@ def parse_args():
          "flag without an argument will render one environment. "
          "(default: %(default)s) (choices: %(choices)s)")
 
-  global args
   args = parser.parse_args()
 
   if args.render == "NONE":
@@ -170,19 +168,21 @@ def parse_args():
 
   args.save_to = os.path.join(BASE_DIR, args.name)
 
+  return args
 
-def setup_logger():
+
+def setup_logger(save_path, verbosity):
   """Set up the logger"""
-  if not os.path.exists(args.save_to):
-    os.mkdir(args.save_to)
+  if not os.path.exists(save_path):
+    os.mkdir(save_path)
 
   # Set up the logfile
   logzero.logfile(
-    filename=os.path.join(args.save_to, 'log.txt'),
+    filename=os.path.join(save_path, 'log.txt'),
     mode='w',
     loglevel=logging.DEBUG)  # Logfile always uses most verbose option.
   # Set the console's stderr to use the defined verbosity
-  logger.handlers[0].setLevel(args.verbosity)
+  logger.handlers[0].setLevel(verbosity)
 
 
 if __name__ == "__main__":
