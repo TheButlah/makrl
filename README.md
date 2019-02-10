@@ -1,4 +1,5 @@
-# Makrl
+# makrl
+<img src="makrl.svg" width="200" align="left" />
 Makrl (Modularized Algorithm Kit for Reinforcement Learning) is a reinforcement learning library that makes implementing state of the art RL algorithms easier for both experienced researchers, newcomers to the field, and software engineers. 
 
 Most implementations of RL algorithms are complicated and hard to understand. There is no clear division between how the neural networks are trained, how the agent-environment interface is run, and how environments are batched together and parallelized on the CPU. Instead of writing code like well engineered software, everything is lumped together resulting in indecipherable code.
