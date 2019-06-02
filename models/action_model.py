@@ -103,8 +103,10 @@ class ActionModel(with_metaclass(ABCMeta, Model)):
         Shaped `(batch_size, max_steps) + state_shape`, where `state_shape` is a
         tuple representing the shape of the environment's state space.
       actions:  A batch of observed actions from transitions of the environment.
-        Shaped `(batch_size, max_steps) + action_shape`, where `action_shape` is
-        a tuple representing the shape of the environment's action space.
+        Shaped `(batch_size, max_steps, len(action_shape)`, where `action_shape`
+        is a tuple representing the shape of the environment's action space. The
+        last axis of `actions` should contain tuples that identifies the actions
+        taken via their index in the action space.
       rewards:  A batch of observed rewards from transitions of the environment.
         Note that the last element of this ndarray will actually be a return and
         not a reward. Shaped `(batch_size, max_steps)`.
@@ -129,8 +131,7 @@ class ActionModel(with_metaclass(ABCMeta, Model)):
     """Developer's note: because `returns` can be computed based entirely on
     `rewards`, it would have been easy to have the `Agent` pass in the computed
     `returns` ndarray. However, this has not been done to more easily allow the
-    possibility of models conditioned on past rewards. Such models would have to
-    convert back from `returns` to `rewards`, thereby wasting computation.
-    Hence, we simply delegate all responsibility for computing `returns` to the
-    `Model`."""
+    possibility of models conditioned on past rewards. Hence, we simply delegate
+    all responsibility for computing `returns` to the `Model`."""
+    # TODO: only calculate loss on all but last bootstrapping steps
     pass

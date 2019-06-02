@@ -75,9 +75,11 @@ class PolicyModel(with_metaclass(ABCMeta, Model)):
       states:  A batch of observed states from transitions of the environment.
         Shaped `(batch_size, max_steps) + state_shape`, where `state_shape` is a
         tuple representing the shape of the environment's state space.
-      actions:  A batch of observed states from transitions of the environment.
-        Shaped `(batch_size, max_steps) + action_shape`, where `action_shape` is
-        a tuple representing the shape of the environment's action space.
+      actions:  A batch of observed actions from transitions of the environment.
+        Shaped `(batch_size, max_steps, len(action_shape)`, where `action_shape`
+        is a tuple representing the shape of the environment's action space. The
+        last axis of `actions` should contain tuples that identifies the actions
+        taken via their index in the action space.
       advantages:  A batch of advantages at each step in the observation
         sequence. Shaped `(batch_size, max_steps)`.
       num_steps:  Either a scalar or a list of integers shaped `(batch_size,)`
@@ -88,4 +90,11 @@ class PolicyModel(with_metaclass(ABCMeta, Model)):
         If `None`, it is assumed that all observations in the batch are
         `max_steps` long.
     """
+    """Developer's note: because `returns` can be computed based entirely on
+    `rewards`, it would have been easy to have the `Agent` pass in the computed
+    `returns` ndarray. However, this has not been done to more easily allow the
+    possibility of models conditioned on past rewards. Hence, we simply delegate
+    all responsibility for computing `returns` to the `Model`."""
+    # TODO: only calculate loss on all but last bootstrapping steps
+    # TODO: document the return of this function
     pass

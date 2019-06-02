@@ -50,15 +50,18 @@ class StateModel(with_metaclass(ABCMeta, Model)):
         Shaped `(batch_size, max_steps) + state_shape`, where `state_shape` is a
         tuple representing the shape of the environment's state space.
       actions:  A batch of observed states from transitions of the environment.
-        Shaped `(batch_size, max_steps-1) + action_shape`, where `action_shape`
-        is a tuple representing the shape of the environment's action space.
+        Shaped `(batch_size, max_steps-1, len(action_shape)`, where
+        `action_shape`is a tuple representing the shape of the environment's
+        action space. The last axis of `actions` should contain tuples that
+        identifies the actions taken via their index in the action space.
         `actions` will have one less step than what is provided for `states`,
         because a state-value function should only depend on past history up to
         and including the latest state, but not the latest action. This ensures
-        that only actions before the last state are provided. Note that the
+        that only actions before the latest state are provided. Note that the
         reason why `actions` is provided at all is because predicting the value
         of a state conditioned on past state-action pairs is permitted, as long
-        as the action following the state that we are predicting is not used.
+        as the action following the state that we are predicting the value of is
+        not used.
       rewards:  A batch of observed rewards from transitions of the environment.
         Note that the last element of this ndarray will actually be a return and
         not a reward. Shaped `(batch_size, max_steps)`.
@@ -83,8 +86,7 @@ class StateModel(with_metaclass(ABCMeta, Model)):
     """Developer's note: because `returns` can be computed based entirely on
     `rewards`, it would have been easy to have the `Agent` pass in the computed
     `returns` ndarray. However, this has not been done to more easily allow the
-    possibility of models conditioned on past rewards. Such models would have to
-    convert back from `returns` to `rewards`, thereby wasting computation.
-    Hence, we simply delegate all responsibility for computing `returns` to the
-    `Model`."""
+    possibility of models conditioned on past rewards. Hence, we simply delegate
+    all responsibility for computing `returns` to the `Model`."""
+    # TODO: only calculate loss on all but last bootstrapping steps
     pass
