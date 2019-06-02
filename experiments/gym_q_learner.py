@@ -96,8 +96,7 @@ def parse_args():
 
   parser.add_argument("-n", "--name",
     type=str,
-    default="%s" % time.strftime(
-      "cart-pole-q-learner_%Y%m%d_%H%M%S"),
+    default=time.strftime("cart-pole-q-learner_%Y%m%d_%H%M%S"),
     help="The name of the experiment being run. Used to identify different "
          "experiments of the same type. Will by default be named based on the "
          "current time.")
@@ -129,14 +128,14 @@ def parse_args():
     type=pos_int,
     default=10000,
     help="Sets the number of steps to run for. A step is completed when every "
-         "environment in the batch has finished a step of its environment. "
-         "(default: %(default)d)")
-  parser.add_argument("--window-size", metavar="N",
+         "environment in the batch has finished a state transition for its "
+         "environment. (default: %(default)d)")
+  parser.add_argument("--history-size", metavar="N",
     type=pos_int,
     default=16,
-    help="Sets the size of the historical window on the most recent environment"
-         "transitions. This is equivalent to the N previous states, as well as"
-         "the latest state, equivalent to N+1 states or N transitions.")
+    help="Sets the size of the historical window of the most recent "
+         "environment transitions. Stores the N previous states in addition to "
+         "the latest state, equivalent to N+1 states or N steps/transitions.")
   parser.add_argument("--batch-size", metavar="N",
     type=pos_int,
     default=utils.num_cores(),
