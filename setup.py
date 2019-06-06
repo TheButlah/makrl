@@ -4,14 +4,14 @@ with open("README.md", "r") as fh:
   long_description = fh.read()
 
 setuptools.setup(
-  name="rl-halite",
+  name="makrl",
   version="0.0.1",
   author="Ryan Butler",
   author_email="thebutlah@gmail.com",
-  description="A reinforcement learning agent for the halite game.",
+  description="Modular Algorithms Kit for Reinforcement Learning",
   long_description=long_description,
   # long_description_content_type="text/markdown",
-  url="https://github.com/CornellDataScience/RL-Halite",
+  url="https://github.com/TheButlah/makrl",
   packages=setuptools.find_packages(),
   classifiers=(
     "Programming Language :: Python :: 3",
