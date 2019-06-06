@@ -161,7 +161,8 @@ class BatchedEnv(object):
         where `True` indicates the environments to reset.
 
     Returns:
-      A ndarray of shape `(num_envs,) + observation_space`.
+      A ndarray of shape `(np.count_nonzero(mask),) + observation_space` if
+      any envs were marked for reset, otherwise `None`.
     """
     if mask is not None:
       num_reset = np.count_nonzero(mask)

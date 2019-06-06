@@ -77,7 +77,9 @@ def main():
     dones = np.logical_or(dones, (envs.step_counters >= args.max_episode_len))
     # Resetting envs gives new `before_states` (also, `after_states` is now
     # invalid but that doesn't matter since it gets overwritten soon anyway)
-    before_states[dones] = envs.reset(dones)
+    reset_states = envs.reset(dones)
+    if reset_states is not None:
+      before_states[dones] = reset_states
 
   envs.close()
 
