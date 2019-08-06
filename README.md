@@ -8,7 +8,7 @@ This has a real impact on researchers - if your agent isn't performing well on s
 
 Using a modularized design enables the following:
 - Synchronous, parallel environment batching across CPU cores for efficient training, enabling hyperparameters like batch size to be independent of the number of CPU cores.
-- Policy and value functions that frame the training process as a regression problem, making it easy for people with supervised learning experience to apply that experience to reinforcement learning
+- Policy and value functions that frame the training process as a non-stationary regression problem, making it easy for people with supervised learning experience to apply that experience to reinforcement learning
 - Separation of the RL algorithms from the neural network architectures.
 - Mixing and matching different neural network architectures with different RL algorithms, making it easy to experiment and diagnose problems
 - Separation of concerns between between more research focused parts of the codebase and more sotware engineering parts of the codebase.
